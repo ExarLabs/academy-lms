@@ -1,174 +1,257 @@
 <div align="center" markdown="1">
 
 <img src=".github/lms-logo.png" alt="Frappe Learning logo" width="80" height="80"/>
-<h1>Frappe Learning</h1>
-
-**Easy to use, open source, Learning Management System**
-
-![Tests](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/vandxn/main&style=flat&logo=cypress)
+<h1>Ignis Academy</h1>
 
 </div>
 
+# Install Frappe Framework
 
-<div align="center">
-	<img src=".github/hero.png?v=5" alt="Hero Image" width="72%" />
-</div>
-<br />
-<div align="center">
-	<a href="https://frappe.io/learning">Website</a>
-	-
-	<a href="https://docs.frappe.io/learning">Documentation</a>
-</div>
+## 1. Install Ubuntu on Windows using WSL(Windows Subsystem for Linux):
+ 
+  `wsl --install`
 
-## Frappe Learning
-Frappe Learning is an easy-to-use learning system that helps you bring structure to your content.
+## 2. Follow the instructions from the documentation (section Debian/Ubuntu)
 
-### Motivation
-In 2021, we were looking for a Learning Management System to launch [Mon.School](https://mon.school) for FOSS United. We checked out Moodle, but it didn’t feel right. The forms were unnecessarily lengthy and the UI was confusing. It shouldn't be this hard to create a course right? So I started making a learning system for Mon.School which soon became a product in itself. The aim is to have a simple platform that anyone can use to launch a course of their own and make knowledge sharing easier.
+https://docs.frappe.io/framework/user/en/installation
 
-### Key Features
+### ⚠️ Note: At the last step, run this command: `bench init ignis_academy` ⚠️
 
-- **Structured Learning**: Design a course with a 3-level hierarchy, where your courses have chapters and you can group your lessons within these chapters. This ensures that the context of the lesson is set by the chapter.
+>## ⚙️ Frappe Setup Notes (if something fails)
+>
+>This README documents common errors encountered during the setup of Frappe Framework inside WSL on Windows, and how they were resolved.
+>
+>---
+>
+>### ❗ Error 1: `mariadb-secure-installation` — Access Denied for Root
+>
+>**Message:**
+>```
+>ERROR 1698 (28000): Access denied for user 'root'@'localhost'
+>```
+>
+>**Cause:**
+>MariaDB uses `unix_socket` authentication for `root`, so you can't log in as root unless you're the Linux root user.
+>
+>**Solution:**
+>Run the following:
+>
+>```bash
+>sudo mariadb-secure-installation
+>```
+>
+>---
+>
+>### ❗ Error 2: `npm` Error After Installing `nvm`
+>
+>**Message:**
+>```
+>npm ERR! enoent ENOENT: no such file or directory, lstat 'C:\Users\Attila\AppData\Roaming\npm'
+>```
+>
+>**Cause:**
+>A conflict between Windows and WSL environments; WSL is trying to access Windows paths.
+>
+>**Solution:**
+>Ignore the error if you're in WSL. Instead, use `nvm` to install Node.js inside WSL:
+>
+>```bash
+>export NVM_DIR="$HOME/.nvm"
+>[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+>
+>nvm install --lts
+>nvm use --lts
+>```
+>
+>---
+>
+>### ❗ Error 3: `wkhtmltox` Dependency Problem
+>
+>**Message:**
+>```
+>wkhtmltox depends on xfonts-75dpi; however:
+>Package xfonts-75dpi is not installed.
+>```
+>
+>**Solution:**
+>Install the missing dependency first:
+>
+>```bash
+>sudo apt update
+>sudo apt install -y xfonts-75dpi
+>```
+>
+>Then re-install the `.deb` package:
+>
+>```bash
+>sudo dpkg -i wkhtmltox_0.12.6.1-2.jammy_amd64.deb
+>```
+>
+>---
+>
+>### ❗ Error 4: `pip install frappe-bench` Blocked
+>
+>**Message:**
+>```
+>error: externally-managed-environment
+>```
+>
+>**Cause:**
+>Ubuntu protects system Python; pip cannot install globally.
+>
+>**Solution 1: Use pipx**
+>```bash
+>sudo apt install pipx
+>pipx install frappe-bench
+>```
+>
+>---
+>
+>### ❗ Error 5: Git Extensions → WSL Git Fails to Read Config
+>
+>**Message:**
+>```
+>External program returned non-zero exit code.
+>git config --includes --get user.name
+>```
+>
+>**Cause:**
+>- WSL Git isn't configured
+>- Git Extensions can't access WSL properly
+>- Wrong WSL distro name
+>
+>**Solution:**
+>1. Ensure Git is installed in WSL:
+>   ```bash
+>   sudo apt install git
+>   ```
+>
+>2. Set Git config inside WSL:
+>   ```bash
+>   git config --global user.name "Your Name"
+>   git config --global user.email "you@example.com"
+>   ```
+>---
+>
+>### ✅ Notes
+>
+>- Copy files to Ubuntu with the following command: `cp /mnt/c/<path to file in windows> .`
 
-- **Live Classes**: Group learners into batches based on courses and duration. You can then create Zoom live class for these batches right from the app. Learners get to see the list of live classes they have to take as a part of this batch.
 
-- **Quizzes and Assignments**: Create quizzes where questions can have single-choice, multiple-choice options, or can be open ended. Instructors can also add assignments which learners can submit as PDF's or Documents.
+## 3. Set hosts file
 
-- **Getting Certified**: Once a learner has completed the course or batch, you can grant them a certificate. The app provides an inbuilt certificate template. You can use this or else create a template of your own and use that instead.
-
-<details>
-<summary>View Screenshots</summary>
-
-
-![Batch](.github/batch.png)
-<div align="center">
-	<sub>
-		Create batches to group your learners
-	</sub>
-</div>
-<br>
-
-
-![Quiz](.github/quiz.png)
-<div align="center">
-	<sub>
-		Evaluate their knowledge by quizzes
-	</sub>
-</div>
-<br>
-
-
-![Cerficicate](.github/certificate.png)
-<div align="center">
-	<sub>
-		Autenticate their work with certification
-	</sub>
-</div>
-</details>
-
-
-### Under the Hood
-
-- [**Frappe Framework**](https://github.com/frappe/frappe): A full-stack web application framework.
-
-- [**Frappe UI**](https://github.com/frappe/frappe-ui): A Vue-based UI library, to provide a modern user interface.
-
-## Production Setup
-
-### Managed Hosting
-
-You can try [Frappe Cloud](https://frappecloud.com), a simple, user-friendly and sophisticated [open-source](https://github.com/frappe/press) platform to host Frappe applications with peace of mind.
-
-It takes care of installation, setup, upgrades, monitoring, maintenance and support of your Frappe deployments. It is a fully featured developer platform with an ability to manage and control multiple Frappe deployments.
-
-<div>
-	<a href="https://frappecloud.com/lms/signup" target="_blank">
-		<picture>
-			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/try-on-fc-white.png">
-			<img src="https://frappe.io/files/try-on-fc-black.png" alt="Try on Frappe Cloud" height="28" />
-		</picture>
-	</a>
-</div>
-
-### Self Hosting
-
-Follow these steps to set up Frappe Learning in production:
-
-**Step 1**: Download the easy install script
-
-```bash
-wget https://frappe.io/easy-install.py
+You have to add the following line to the hosts file in `C:/Windows/system32/drivers/etc` folder:
+```
+127.0.0.1 academy.local
 ```
 
-**Step 2**: Run the deployment command
+## 4. Install our LMS app
 
 ```bash
-python3 ./easy-install.py deploy \
-    --project=learning_prod_setup \
-    --email=your_email.example.com \
-    --image=ghcr.io/frappe/lms \
-    --version=stable \
-    --app=lms \
-    --sitename subdomain.domain.tld
+cd ignis_academy
+# Clone your custom Academy LMS app from private repository
+bench get-app academy_lms git@github.com:ExarLabs/academy-lms.git
 ```
 
-Replace the following parameters with your values:
-- `your_email.example.com`: Your email address
-- `subdomain.domain.tld`: Your domain name where Learning will be hosted
+Alternative for HTTPS:
+```bash
+# If SSH is not configured, use HTTPS (requires token for private repos)
+bench get-app academy_lms https://github.com/ExarLabs/academy-lms.git
+```
 
-The script will set up a production-ready instance of Frappe Learning with all the necessary configurations in about 5 minutes.
+## 5. Database User Setup
 
-## Development Setup
+```bash
+# Access MySQL as root
+sudo mysql -u root
 
-### Docker
+# Create frappe user with full privileges
+CREATE USER 'frappe'@'localhost' IDENTIFIED BY 'pass';
+GRANT ALL PRIVILEGES ON *.* TO 'frappe'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
 
-You need Docker, docker-compose and git setup on your machine. Refer [Docker documentation](https://docs.docker.com/). After that, follow below steps:
+## 6. MySQL Configuration
 
-**Step 1**: Setup folder and download the required files
+```bash
+# Edit MySQL configuration file
+sudo nano /etc/mysql/my.cnf
 
-    mkdir frappe-learning
-    cd frappe-learning
+# Add the following configuration:
+[client]
+user = frappe
+password = pass
+```
 
-    # Download the docker-compose file
-    wget -O docker-compose.yml https://raw.githubusercontent.com/frappe/lms/develop/docker/docker-compose.yml
+**Purpose**: Configures default MySQL credentials for bench operations.
 
-    # Download the setup script
-    wget -O init.sh https://raw.githubusercontent.com/frappe/lms/develop/docker/init.sh
+**Potential Issues**:
+- ⚠️ **File Location**: On some systems, config might be in `/etc/mysql/mysql.conf.d/mysqld.cnf`
 
-**Step 2**: Run the container and daemonize it
+## 7. Create site
 
-    docker compose up -d
+```bash
+bench new-site academy.local
+```
 
-**Step 3**: The site [http://lms.localhost:8000/lms](http://lms.localhost:8000/lms) should now be available. The default credentials are:
-- Username: Administrator
-- Password: admin
+## 8. Install App on Site
 
-### Local
+```bash
+# Install the LMS app on your academy.local site
+bench --site academy.local install-app lms
+```
 
-To setup the repository locally follow the steps mentioned below:
+**Purpose**: Installs the LMS application on the specified site.
 
-1. Install bench and setup a `frappe-bench` directory by following the [Installation Steps](https://frappeframework.com/docs/user/en/installation)
-1. Start the server by running `bench start`
-1. In a separate terminal window, create a new site by running `bench new-site learning.test`
-1. Map your site to localhost with the command `bench --site learning.test add-to-hosts`
-1. Get the Learning app. Run `bench get-app https://github.com/frappe/lms`
-1. Run `bench --site learning.test install-app lms`.
-1. Now open the URL `http://learning.test:8000/lms` in your browser, you should see the app running
 
-## Learn and connect
+## 9. Database Restoration
 
-- [Telegram Public Group](https://t.me/frappelms)
-- [Discuss Forum](https://discuss.frappe.io/c/lms/70)
-- [Documentation](https://docs.frappe.io/learning)
-- [YouTube](https://www.youtube.com/channel/UCn3bV5kx77HsVwtnlCeEi_A)
+```bash
+# Restore database from backup file
+bench --site academy.local restore db_backups/20250603_164306-academy_local-database.sql.gz
+```
 
-<br>
-<br>
-<div align="center" style="padding-top: 0.75rem;">
-	<a href="https://frappe.io" target="_blank">
-		<picture>
-			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
-			<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
-		</picture>
-	</a>
-</div>
+**Purpose**: Restores a previously backed up database.
+
+**Potential Issues**:
+- ⚠️ **File Path**: Ensure backup file exists at specified location
+
+## 10. Start Development Server
+
+```bash
+# Start bench development server (run in separate terminal)
+bench start
+```
+
+**Purpose**: Starts the development server for testing.
+
+**Note**: This should be run in a separate terminal tab/window as it's a blocking process.
+
+## Verification Steps
+
+After setup, verify everything works:
+
+```bash
+# Check site status
+bench --site academy.local doctor
+
+# List installed apps
+bench --site academy.local list-apps
+
+# Access the site
+# Frappe editor: http://academy.local:8000/app/lms
+# The page itself: http://academy.local:8000/lms
+```
+
+## Backup Commands
+
+```bash
+# Create database backup
+bench --site academy.local backup (--with-files)
+
+# List backups
+bench --site academy.local list-backups
+
+# Restore specific backup
+bench --site academy.local restore [backup-file]
+```
