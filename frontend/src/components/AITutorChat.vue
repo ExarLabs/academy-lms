@@ -2,16 +2,10 @@
   <div v-if="showChat" id="ai-tutor-chat" class="fixed bottom-4 right-4 z-50">
     <div ref="chatContainer"
       class="bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col resize overflow-hidden"
-      :style="{ width: chatWidth + 'px', height: chatHeight + 'px', minWidth: '400px', minHeight: '500px', maxWidth: '800px', maxHeight: '900px' }">
-      <div class="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center cursor-move"
-        @mousedown="startDrag">
+      :style="{ width: '500px', height: '600px', minWidth: '400px', minHeight: '500px', maxWidth: '800px', maxHeight: '900px' }">
+      <div class="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
         <h3 class="font-semibold">AI Tutor</h3>
         <div class="flex items-center space-x-2">
-          <button @click="minimizeChat" class="text-white hover:text-gray-200" title="Minimize">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-            </svg>
-          </button>
           <button @click="toggleChat" class="text-white hover:text-gray-200" title="Close">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -64,7 +58,7 @@
   </div>
 
   <!-- Minimized chat button -->
-  <div v-else-if="isMinimized" class="fixed bottom-4 right-4 z-50">
+  <div v-else-if="!showChat" class="fixed bottom-4 right-4 z-50">
     <button @click="restoreChat"
       class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors relative">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,17 +96,12 @@ const props = defineProps({
 })
 
 const showChat = ref(true) // Default to open
-const isMinimized = ref(false)
 const currentMessage = ref('')
 const messages = ref([])
 const isWaiting = ref(false)
 const messagesContainer = ref(null)
 const chatContainer = ref(null)
 const unreadMessages = ref(0)
-
-// Chat dimensions
-const chatWidth = ref(500)
-const chatHeight = ref(600)
 
 // Dragging state
 const isDragging = ref(false)
@@ -139,21 +128,11 @@ onMounted(() => {
       sender: 'Tutor',
       text: `Hello! I'm your AI tutor. I'm here to help you with any questions about "${props.lessonTitle || 'this lesson'}". What would you like to know?`
     })
-  }
-
-  // Add event listeners for dragging
-  document.addEventListener('mousemove', handleDrag)
-  document.addEventListener('mouseup', stopDrag)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('mousemove', handleDrag)
-  document.removeEventListener('mouseup', stopDrag)
+  }  
 })
 
 const toggleChat = () => {
   showChat.value = !showChat.value
-  isMinimized.value = false
   if (showChat.value) {
     unreadMessages.value = 0
     if (messages.value.length === 0) {
@@ -166,48 +145,9 @@ const toggleChat = () => {
   }
 }
 
-const minimizeChat = () => {
-  showChat.value = false
-  isMinimized.value = true
-}
-
 const restoreChat = () => {
   showChat.value = true
-  isMinimized.value = false
   unreadMessages.value = 0
-}
-
-const startDrag = (event) => {
-  isDragging.value = true
-  const rect = chatContainer.value.getBoundingClientRect()
-  dragOffset.value = {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top
-  }
-  event.preventDefault()
-}
-
-const handleDrag = (event) => {
-  if (!isDragging.value || !chatContainer.value) return
-
-  const newX = event.clientX - dragOffset.value.x
-  const newY = event.clientY - dragOffset.value.y
-
-  // Keep within viewport bounds
-  const maxX = window.innerWidth - chatContainer.value.offsetWidth
-  const maxY = window.innerHeight - chatContainer.value.offsetHeight
-
-  const constrainedX = Math.max(0, Math.min(newX, maxX))
-  const constrainedY = Math.max(0, Math.min(newY, maxY))
-
-  chatContainer.value.style.left = constrainedX + 'px'
-  chatContainer.value.style.top = constrainedY + 'px'
-  chatContainer.value.style.right = 'auto'
-  chatContainer.value.style.bottom = 'auto'
-}
-
-const stopDrag = () => {
-  isDragging.value = false
 }
 
 const sendMessage = async () => {
@@ -240,7 +180,7 @@ const sendMessage = async () => {
     messages.value.push(tutorMessage)
 
     // If chat is minimized, increment unread counter
-    if (isMinimized.value) {
+    if (!showChat.value) {
       unreadMessages.value++
     }
 
@@ -274,7 +214,6 @@ const scrollToBottom = () => {
 }
 
 @keyframes bounce {
-
   0%,
   80%,
   100% {
