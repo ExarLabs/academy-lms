@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: jannat@frappe.io\n"
 "POT-Creation-Date: 2025-05-23 16:04+0000\n"
-"PO-Revision-Date: 2025-05-26 18:10\n"
+"PO-Revision-Date: 2025-06-10 15:14\n"
 "Last-Translator: jannat@frappe.io\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +17,38 @@ msgstr ""
 "X-Crowdin-File: /[frappe.lms] develop/lms/locale/main.pot\n"
 "X-Crowdin-File-ID: 90\n"
 "Language: hu_HU\n"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.title"
+msgstr "AI Tutor"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.tutor"
+msgstr "Tutor"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.you"
+msgstr "Ön"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.error"
+msgstr "Sajnálom, de hibát észleltem. Kérlek, próbáld újra."
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.welcome_message"
+msgstr "Üdvözöllek! Én vagyok az AI tutora. Azért vagyok itt, hogy segítsek neked bármilyen kérdésben ezzel a leckével kapcsolatban. Mit szeretnél tudni?"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.placeholder"
+msgstr "Tedd fel kérdésed erről a leckéről..."
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.send"
+msgstr "Küldés"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.typing"
+msgstr "Gépelés..."
 
 #: lms/templates/emails/assignment_submission.html:5
 msgid " Please evaluate and grade it."
@@ -6410,4 +6442,3 @@ msgstr ""
 #: lms/lms/workspace/lms/lms.json
 msgid "{} Published"
 msgstr "{} Közzétett"
-
