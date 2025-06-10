@@ -6581,3 +6581,35 @@ msgstr ""
 msgid "{} Published"
 msgstr ""
 
+
+#: frontend/src/components/Settings/AITutorChat.vue
+msgid "ai_tutor_chat.title"
+msgstr "AI Tutor" 
+
+#: frontend/src/components/Settings/AITutorChat.vue
+msgid "ai_tutor_chat.tutor"
+msgstr "Tutor" 
+
+#: frontend/src/components/Settings/AITutorChat.vue
+msgid "ai_tutor_chat.you"
+msgstr "You" 
+
+#: frontend/src/components/Settings/AITutorChat.vue
+msgid "ai_tutor_chat.error"
+msgstr "I apologize, but I encountered an error. Please try again." 
+
+#: frontend/src/components/Settings/AITutorChat.vue
+msgid "ai_tutor_chat.welcome_message"
+msgstr "Hello! I'm your AI tutor. I'm here to help you with any questions about this lesson. What would you like to know?"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.placeholder"
+msgstr "Ask your question about this lesson..."
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.send"
+msgstr "Send"
+
+#: frontend/src/components/AITutorChat.vue
+msgid "ai_tutor_chat.typing"
+msgstr "Typing..."

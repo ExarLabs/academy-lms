@@ -4,7 +4,7 @@
       class="bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col resize overflow-hidden"
       :style="{ width: '500px', height: '600px', minWidth: '400px', minHeight: '500px', maxWidth: '800px', maxHeight: '900px' }">
       <div class="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
-        <h3 class="font-semibold">AI Tutor</h3>
+        <h3 class="font-semibold">{{ __("ai_tutor_chat.title") }}</h3>
         <div class="flex items-center space-x-2">
           <button @click="toggleChat" class="text-white hover:text-gray-200" title="Close">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,9 +30,9 @@
         </div>
         <div v-if="isWaiting" class="text-left">
           <div class="inline-block p-3 rounded-lg bg-white text-gray-800 border shadow-sm">
-            <div class="font-semibold text-xs mb-2">Tutor</div>
+            <div class="font-semibold text-xs mb-2">{{ __("ai_tutor_chat.tutor") }}</div>
             <div class="text-sm flex items-center">
-              <div class="animate-pulse">Typing...</div>
+              <div class="animate-pulse">{{ __("ai_tutor_chat.typing") }}</div>
               <div class="ml-2 flex space-x-1">
                 <div class="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
                 <div class="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
@@ -46,11 +46,11 @@
       <div class="p-4 border-t bg-white">
         <div class="flex space-x-3">
           <input v-model="currentMessage" @keyup.enter="sendMessage" :disabled="isWaiting" type="text"
-            placeholder="Ask your question about this lesson..."
+            :placeholder="__('ai_tutor_chat.placeholder')"
             class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
           <button @click="sendMessage" :disabled="isWaiting || !currentMessage.trim()"
             class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors">
-            Send
+            {{ __("ai_tutor_chat.send") }}
           </button>
         </div>
       </div>
@@ -59,35 +59,20 @@
 
   <!-- Minimized chat button -->
   <div v-else-if="!showChat" class="fixed bottom-4 right-4 z-50">
-    <button @click="restoreChat"
+    <button @click="toggleChat"
       class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors relative">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z">
-        </path>
-      </svg>
+      <MessageSquareText class="w-5 h-5 text-ink-white stroke-1.5" />
       <div v-if="unreadMessages > 0"
         class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
         {{ unreadMessages }}
       </div>
     </button>
   </div>
-
-  <!-- Chat toggle button when chat is closed -->
-  <div v-else class="fixed bottom-4 right-4 z-50">
-    <button @click="toggleChat"
-      class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z">
-        </path>
-      </svg>
-    </button>
-  </div>
 </template>
 
 <script setup>
 import { ref, nextTick, inject, onMounted, onUnmounted } from 'vue'
+import { MessageSquareText } from 'lucide-vue-next'
 import { createResource } from 'frappe-ui'
 
 const props = defineProps({
@@ -125,8 +110,11 @@ onMounted(() => {
   // Add welcome message on mount since chat is open by default
   if (messages.value.length === 0) {
     messages.value.push({
-      sender: 'Tutor',
-      text: `Hello! I'm your AI tutor. I'm here to help you with any questions about "${props.lessonTitle || 'this lesson'}". What would you like to know?`
+      sender: __("ai_tutor_chat.tutor"), // 'Tutor'
+      text: __("ai_tutor_chat.welcome_message", {
+        lessonTitle: props.lessonTitle || 'this lesson'
+      })
+      // text: `Hello! I'm your AI tutor. I'm here to help you with any questions about "${props.lessonTitle || 'this lesson'}". What would you like to know?`
     })
   }  
 })
@@ -138,16 +126,14 @@ const toggleChat = () => {
     if (messages.value.length === 0) {
       // Add welcome message
       messages.value.push({
-        sender: 'Tutor',
-        text: `Hello! I'm your AI tutor. I'm here to help you with any questions about "${props.lessonTitle || 'this lesson'}". What would you like to know?`
+        sender: __("ai_tutor_chat.tutor"),
+        text: __("ai_tutor_chat.welcome_message", {
+          lessonTitle: props.lessonTitle || 'this lesson'
+        })
+        // text: `Hello! I'm your AI tutor. I'm here to help you with any questions about "${props.lessonTitle || 'this lesson'}". What would you like to know?`
       })
     }
   }
-}
-
-const restoreChat = () => {
-  showChat.value = true
-  unreadMessages.value = 0
 }
 
 const sendMessage = async () => {
@@ -157,7 +143,7 @@ const sendMessage = async () => {
 
   // Add user message
   messages.value.push({
-    sender: 'You',
+    sender: __("ai_tutor_chat.you"), // 'You'
     text: message
   })
 
@@ -170,11 +156,12 @@ const sendMessage = async () => {
 
   try {
     const response = await chatResource.submit({ message })
+    console.log('Tutor response:', response)
 
     // Add tutor response
     const tutorMessage = {
-      sender: 'Tutor',
-      text: response.answer || 'I apologize, but I encountered an error. Please try again.'
+      sender: __("ai_tutor_chat.tutor"),
+      text: response.answer || __("ai_tutor_chat.error") // 'I apologize, but I encountered an error. Please try again.'
     }
 
     messages.value.push(tutorMessage)
@@ -187,8 +174,8 @@ const sendMessage = async () => {
   } catch (error) {
     console.error('Chat error:', error)
     messages.value.push({
-      sender: 'Tutor',
-      text: 'I apologize, but I encountered an error. Please try again.'
+      sender: __("ai_tutor_chat.tutor"),
+      text: __("ai_tutor_chat.error") // 'I apologize, but I encountered an error. Please try again.'
     })
   } finally {
     isWaiting.value = false
