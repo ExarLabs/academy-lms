@@ -19,35 +19,35 @@ msgstr ""
 "Language: hu_HU\n"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.title"
-msgstr "AI Tutor"
+msgid "AI Tutor"
+msgstr "AI Oktató"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.tutor"
-msgstr "Tutor"
+msgid "Tutor"
+msgstr "Oktató"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.you"
+msgid "You"
 msgstr "Ön"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.error"
+msgid "I apologize, but I encountered an error. Please try again."
 msgstr "Sajnálom, de hibát észleltem. Kérlek, próbáld újra."
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.welcome_message"
+msgid "Hello! I'm your AI tutor. I'm here to help you with any questions about this lesson. What would you like to know?"
 msgstr "Üdvözöllek! Én vagyok az AI tutora. Azért vagyok itt, hogy segítsek neked bármilyen kérdésben ezzel a leckével kapcsolatban. Mit szeretnél tudni?"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.placeholder"
+msgid "Ask your question about this lesson..."
 msgstr "Tedd fel kérdésed erről a leckéről..."
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.send"
+msgid "Send"
 msgstr "Küldés"
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.typing"
+msgid "Typing..."
 msgstr "Gépelés..."
 
 #: lms/templates/emails/assignment_submission.html:5

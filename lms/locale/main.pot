@@ -6583,33 +6583,37 @@ msgstr ""
 
 
 #: frontend/src/components/Settings/AITutorChat.vue
-msgid "ai_tutor_chat.title"
-msgstr "AI Tutor" 
+msgid "AI Tutor"
+msgstr ""
 
 #: frontend/src/components/Settings/AITutorChat.vue
-msgid "ai_tutor_chat.tutor"
-msgstr "Tutor" 
+msgid "Tutor"
+msgstr ""
 
 #: frontend/src/components/Settings/AITutorChat.vue
-msgid "ai_tutor_chat.you"
-msgstr "You" 
+msgid "You"
+msgstr ""
 
 #: frontend/src/components/Settings/AITutorChat.vue
-msgid "ai_tutor_chat.error"
-msgstr "I apologize, but I encountered an error. Please try again." 
+msgid "I apologize, but I encountered an error. Please try again."
+msgstr ""
 
 #: frontend/src/components/Settings/AITutorChat.vue
-msgid "ai_tutor_chat.welcome_message"
-msgstr "Hello! I'm your AI tutor. I'm here to help you with any questions about this lesson. What would you like to know?"
+msgid "Hello! I'm your AI tutor. I'm here to help you with any questions about this lesson. What would you like to know?"
+msgstr ""
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.placeholder"
-msgstr "Ask your question about this lesson..."
+msgid "Ask your question about this lesson..."
+msgstr ""
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.send"
-msgstr "Send"
+msgid "Send"
+msgstr ""
 
 #: frontend/src/components/AITutorChat.vue
-msgid "ai_tutor_chat.typing"
-msgstr "Typing..."
+msgid "Typing..."
+msgstr ""
+
+#: frontend/src/components/AITutorChat.vue
+msgid "this lesson"
+msgstr ""
