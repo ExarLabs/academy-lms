@@ -261,6 +261,12 @@
 				/>
 			</div>
 		</div>
+		
+		<!-- AI Tutor Chat Component -->
+		<AITutorChat 
+			:courseName="courseName"
+			:lessonTitle="lesson.data?.title"
+		/>
 	</div>
 </template>
 <script setup>
@@ -301,6 +307,7 @@ import LessonContent from '@/components/LessonContent.vue'
 import CourseInstructors from '@/components/CourseInstructors.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import CertificationLinks from '@/components/CertificationLinks.vue'
+import AITutorChat from '@/components/AITutorChat.vue'
 
 const user = inject('$user')
 const socket = inject('$socket')
