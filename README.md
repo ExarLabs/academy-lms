@@ -156,7 +156,7 @@ bench get-app lms git@github.com:ExarLabs/academy-lms.git
 Alternative for HTTPS:
 ```bash
 # If SSH is not configured, use HTTPS (requires token for private repos)
-bench get-app academy_lms https://github.com/ExarLabs/academy-lms.git
+bench get-app lms https://github.com/ExarLabs/academy-lms.git
 ```
 
 ## 5. Database User Setup
