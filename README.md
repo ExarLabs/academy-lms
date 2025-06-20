@@ -150,7 +150,7 @@ You have to add the following line to the hosts file in `C:/Windows/system32/dri
 ```bash
 cd ignis_academy
 # Clone your custom Academy LMS app from private repository
-bench get-app academy_lms git@github.com:ExarLabs/academy-lms.git
+bench get-app lms git@github.com:ExarLabs/academy-lms.git
 ```
 
 Alternative for HTTPS:
