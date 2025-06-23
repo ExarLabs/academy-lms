@@ -5,7 +5,54 @@
 
 </div>
 
-# Install Frappe Framework
+# Installation Options
+
+## 🐳 Docker Installation (Recommended)
+
+For a quick and easy setup using Docker, see the [Docker Setup Guide](docker/README.md).
+
+### Quick Start with Docker:
+
+1. Navigate to the docker directory:
+   ```bash
+   cd docker
+   ```
+
+2. Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Edit the `.env` file with your configuration:
+   ```bash
+   # Database Configuration
+   MARIADB_ROOT_PASSWORD=your_secure_password
+   MYSQL_ROOT_PASSWORD=your_secure_password
+   
+   # Site Configuration
+   SITE_NAME=your_site_name
+   ADMIN_PASSWORD=your_admin_password
+   
+   # Development Configuration
+   DEVELOPER_MODE=1
+   ```
+
+4. Start the application:
+   ```bash
+   docker-compose up -d
+   ```
+
+5. Access your site at `http://localhost:8000`
+
+For detailed Docker setup instructions, troubleshooting, and configuration options, see the [Docker README](docker/README.md).
+
+---
+
+# Manual Installation (Local Setup)
+
+If you prefer to install Frappe Framework manually on your local machine, follow the instructions below:
+
+## Install Frappe Framework
 
 ## 1. Install Ubuntu on Windows using WSL(Windows Subsystem for Linux):
  
@@ -256,7 +303,7 @@ bench --site academy.local list-backups
 bench --site academy.local restore [backup-file]
 ```
 
-## 10. Install AI Tutor Chat App
+## 11. Install AI Tutor Chat App
 - Download the app:
     - `bench get-app ai_tutor_chat git@github.com/ExarLabs/academy-ai-tutor-chat` or `bench get-app ai_tutor_chat https://github.com/ExarLabs/academy-ai-tutor-chat`, then:
 - Install the app:
