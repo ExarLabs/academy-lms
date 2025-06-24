@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 # Function: get or update app
 get_or_update_app() {
@@ -111,12 +111,25 @@ else
 fi
 
 # Install the LMS app
-get_or_update_app lms ${LMS_REPO_URL} ${SITE_NAME}
+if [ "$SSH_KEY_AVAILABLE" = true ]; then
+    get_or_update_app lms ${LMS_REPO_URL} ${SITE_NAME}
+else
+    # Use HTTPS URLs if SSH is not available
+    LMS_HTTPS_URL=$(echo ${LMS_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
+    get_or_update_app lms ${LMS_HTTPS_URL} ${SITE_NAME}
+fi
 
 # Install the AI Tutor Chat app
-get_or_update_app ai_tutor_chat ${AI_TUTOR_REPO_URL} ${SITE_NAME}
+if [ "$SSH_KEY_AVAILABLE" = true ]; then
+    get_or_update_app ai_tutor_chat ${AI_TUTOR_REPO_URL} ${SITE_NAME}
+else
+    # Use HTTPS URLs if SSH is not available
+    AI_TUTOR_HTTPS_URL=$(echo ${AI_TUTOR_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
+    get_or_update_app ai_tutor_chat ${AI_TUTOR_HTTPS_URL} ${SITE_NAME}
+fi
 
 bench --site ${SITE_NAME} set-config developer_mode ${DEVELOPER_MODE}
+bench --site ${SITE_NAME} set-config ai_tutor_api_url ${AI_TUTOR_API_URL}
 bench --site ${SITE_NAME} clear-cache
 bench use ${SITE_NAME}
 
