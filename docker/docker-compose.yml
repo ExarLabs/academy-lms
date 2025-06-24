@@ -28,6 +28,7 @@ services:
       - NODE_VERSION_DEVELOP=${NODE_VERSION_DEVELOP}
       - LMS_REPO_URL=${LMS_REPO_URL}
       - AI_TUTOR_REPO_URL=${AI_TUTOR_REPO_URL}
+      - AI_TUTOR_API_URL=${AI_TUTOR_API_URL}
     working_dir: /home/frappe
     volumes:
       - .:/workspace
@@ -38,6 +39,15 @@ services:
     depends_on:
       - mariadb
       - redis
+    networks:
+      - default
+      - langchain-network
 
 volumes:
   mariadb-data:
+
+
+networks:
+  langchain-network:
+    external: true
+    name: academy-langchain_langchain-network
