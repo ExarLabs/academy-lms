@@ -1,0 +1,12 @@
+# Environment variables - contains sensitive data
+.env
+
+# Docker volumes
+volumes/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

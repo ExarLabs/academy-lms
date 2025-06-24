@@ -1,5 +1,5 @@
 version: "3.7"
-name: lms
+name: academy-lms
 services:
   mariadb:
     image: mariadb:10.8
@@ -9,7 +9,7 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      MYSQL_ROOT_PASSWORD: 123
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     volumes:
       - mariadb-data:/var/lib/mysql
 
@@ -21,12 +21,33 @@ services:
     command: bash /workspace/init.sh
     environment:
       - SHELL=/bin/bash
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - SITE_NAME=${SITE_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DEVELOPER_MODE=${DEVELOPER_MODE}
+      - NODE_VERSION_DEVELOP=${NODE_VERSION_DEVELOP}
+      - LMS_REPO_URL=${LMS_REPO_URL}
+      - AI_TUTOR_REPO_URL=${AI_TUTOR_REPO_URL}
+      - AI_TUTOR_API_URL=${AI_TUTOR_API_URL}
     working_dir: /home/frappe
     volumes:
       - .:/workspace
+      - ./.ssh:/workspace/ssh:ro
     ports:
       - 8000:8000
       - 9000:9000
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - default
+      - langchain-network
 
 volumes:
   mariadb-data:
+
+
+networks:
+  langchain-network:
+    external: true
+    name: academy-langchain_langchain-network
