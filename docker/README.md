@@ -64,8 +64,9 @@ docker-compose logs -f frappe
 | `ADMIN_PASSWORD` | Administrator user login password | admin |
 | `DEVELOPER_MODE` | Developer mode | 1 |
 | `NODE_VERSION_DEVELOP` | Node.js version | 18 |
-| `LMS_REPO_URL` | LMS repository URL | https://github.com/ExarLabs/academy-lms.git |
-| `AI_TUTOR_REPO_URL` | AI Tutor repository URL | https://github.com/ExarLabs/academy-ai-tutor-chat |
+| `LMS_REPO_URL` | LMS repository URL | git@github.com:ExarLabs/academy-lms.git |
+| `AI_TUTOR_REPO_URL` | AI Tutor repository URL | git@github.com:ExarLabs/academy-ai-tutor-chat.git |
+| `AI_TUTOR_API_URL` | AI Tutor API endpoint | http://langchain-api:8000 |
 
 ## Security Notes
 
@@ -82,6 +83,22 @@ If you encounter issues:
 2. Restart services: `docker-compose restart`
 3. Full rebuild: `docker-compose down && docker-compose up --build`
 
+## LangChain Integration
+
+This setup is designed to work with a separate LangChain API service. The AI Tutor Chat functionality connects to the LangChain service via the `AI_TUTOR_API_URL` environment variable.
+
+### Network Configuration
+
+The Frappe container connects to the `langchain-network` to communicate with the LangChain API service. Make sure the LangChain service is running and accessible at the configured URL.
+
+### Configuration
+
+The AI Tutor API URL is automatically configured in the Frappe site config during initialization. The chat.py module reads this configuration using:
+
+```python
+ai_tutor_api_url = frappe.conf.get("ai_tutor_api_url", "http://localhost:7999")
+```
+
 ## Production Deployment
 
 For production deployment:
@@ -91,3 +108,4 @@ For production deployment:
 3. Configure proper SSL certificates
 4. Set up proper backup strategies for MariaDB data
 5. Consider using Docker secrets for sensitive data
+6. Ensure LangChain API service is properly configured and secured
