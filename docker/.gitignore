@@ -10,3 +10,6 @@ volumes/
 # Temporary files
 *.tmp
 *.temp
+
+# SSH private key
+.ssh/id_ed25519
