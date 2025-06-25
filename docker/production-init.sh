@@ -5,6 +5,10 @@
 
 set -e  # Exit on any error
 
+# Load common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common-functions.sh"
+
 # Function: log with timestamp
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
@@ -55,7 +59,17 @@ backup_sites() {
     if [ -d "/home/frappe/frappe-bench/sites" ]; then
         log "Creating backup for all sites..."
         cd /home/frappe/frappe-bench
-        bench --all-sites backup --with-files || log "Backup failed, continuing anyway..."
+        
+        SITES=$(get_all_sites)
+        if [ -z "$SITES" ]; then
+            log "No existing sites found, backing up ${SITE_NAME} only"
+            bench --site ${SITE_NAME} backup --with-files || log "Backup failed, continuing anyway..."
+        else
+            for site in $SITES; do
+                log "Backing up site: $site"
+                bench --site $site backup --with-files || log "Backup failed for $site, continuing anyway..."
+            done
+        fi
     fi
 }
 
@@ -65,8 +79,26 @@ health_check() {
     
     if [ -d "/home/frappe/frappe-bench" ]; then
         cd /home/frappe/frappe-bench
-        # Check if sites are accessible
-        if bench --all-sites doctor >/dev/null 2>&1; then
+        
+        SITES=$(get_all_sites)
+        local health_check_passed=true
+        
+        if [ -z "$SITES" ]; then
+            log "No existing sites found, checking ${SITE_NAME} only"
+            if ! bench --site ${SITE_NAME} doctor >/dev/null 2>&1; then
+                health_check_passed=false
+            fi
+        else
+            for site in $SITES; do
+                log "Health check for site: $site"
+                if ! bench --site $site doctor >/dev/null 2>&1; then
+                    log "WARNING: Health check failed for site $site"
+                    health_check_passed=false
+                fi
+            done
+        fi
+        
+        if [ "$health_check_passed" = true ]; then
             log "Sites health check passed"
             return 0
         else
@@ -87,13 +119,13 @@ setup_production_optimizations() {
         cd /home/frappe/frappe-bench
         
         # Set production configurations for all sites
-        bench --all-sites set-config maintenance_mode 0
-        bench --all-sites set-config allow_tests 0
-        bench --all-sites set-config server_script_enabled 0
-        bench --all-sites set-config disable_website_cache 0
+        apply_config_to_all_sites maintenance_mode 0
+        apply_config_to_all_sites allow_tests 0
+        apply_config_to_all_sites server_script_enabled 0
+        apply_config_to_all_sites disable_website_cache 0
         
         # Enable compression
-        bench --all-sites set-config enable_gzip_compression 1
+        apply_config_to_all_sites enable_gzip_compression 1
         
         log "Production optimizations applied"
     fi
@@ -135,21 +167,68 @@ done
 check_database
 check_redis
 
+# Initialize SSH availability (production environments typically use HTTPS)
+SSH_KEY_AVAILABLE=false
+
+# Check if SSH keys are available
+if [ -f "/workspace/ssh/id_ed25519" ]; then
+    SSH_KEY_AVAILABLE=true
+    log "SSH keys detected, will use SSH for git operations"
+else
+    log "No SSH keys found, will use HTTPS for git operations"
+fi
+
 # Navigate to bench directory or run main init
-if [ -d "/home/frappe/frappe-bench" ]; then
+if [ -d "/home/frappe/frappe-bench" ] && [ -f "/home/frappe/frappe-bench/sites/common_site_config.json" ]; then
     cd /home/frappe/frappe-bench
-    log "Using existing bench directory"
+    log "Using existing valid bench directory"
     
     # Backup before any changes
     backup_sites
     
-    # Source the main init script functions and run it
-    log "Running main initialization script..."
-    source /workspace/init.sh
+    # Load common functions and run app updates directly
+    log "Running app updates..."
+    
+    # Install/Update the LMS app on all sites
+    if [ "$SSH_KEY_AVAILABLE" = true ]; then
+        update_apps_on_all_sites lms ${LMS_REPO_URL}
+    else
+        # Use HTTPS URLs if SSH is not available
+        LMS_HTTPS_URL=$(echo ${LMS_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
+        update_apps_on_all_sites lms ${LMS_HTTPS_URL}
+    fi
+
+    # Install/Update the AI Tutor Chat app on all sites
+    if [ "$SSH_KEY_AVAILABLE" = true ]; then
+        update_apps_on_all_sites ai_tutor_chat ${AI_TUTOR_REPO_URL}
+    else
+        # Use HTTPS URLs if SSH is not available
+        AI_TUTOR_HTTPS_URL=$(echo ${AI_TUTOR_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
+        update_apps_on_all_sites ai_tutor_chat ${AI_TUTOR_HTTPS_URL}
+    fi
+
+    # Set configurations for all sites
+    apply_config_to_all_sites developer_mode ${DEVELOPER_MODE}
+    apply_config_to_all_sites ai_tutor_api_url ${AI_TUTOR_API_URL}
+    
+    # Clear cache for all sites
+    clear_cache_all_sites
 else
-    log "Bench directory not found, running main initialization..."
-    # Run the main init script
-    exec /workspace/init.sh
+    log "Bench directory not found or invalid, running main initialization..."
+    # Run the main init script which will properly initialize the bench
+    log "Executing init.sh script..."
+    
+    # Set production mode to prevent bench start
+    export PRODUCTION_MODE=true
+    bash "${SCRIPT_DIR}/init.sh"
+    
+    # Check if init.sh was successful
+    if [ $? -eq 0 ]; then
+        log "Main initialization completed successfully"
+    else
+        log "ERROR: Main initialization failed"
+        exit 1
+    fi
 fi
 
 # Apply production optimizations
