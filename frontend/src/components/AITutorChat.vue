@@ -3,7 +3,7 @@
     <div ref="chatContainer"
       class="bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col resize overflow-hidden"
       :style="{ width: '500px', height: '600px', minWidth: '400px', minHeight: '500px', maxWidth: '800px', maxHeight: '900px' }">
-      <div class="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
+      <div class="bg-green-600 text-white p-3 rounded-t-lg flex justify-between items-center">
         <h3 class="font-semibold">{{ __("AI Tutor") }}</h3>
         <div class="flex items-center space-x-2">
           <button @click="toggleChat" class="text-white hover:text-gray-200" title="Close">
