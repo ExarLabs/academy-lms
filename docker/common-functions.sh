@@ -9,8 +9,8 @@ is_app_installed() {
     SITE=$2
     
     # Check if app is listed in the site's installed apps
-    # Use bench list-apps command with proper syntax
-    if bench list-apps --site ${SITE} 2>/dev/null | grep -q "^${APP_NAME}$"; then
+    # Use a more flexible grep pattern to handle different output formats
+    if bench --site ${SITE} list-apps | grep -q "${APP_NAME}"; then
         return 0  # App is installed
     else
         return 1  # App is not installed
