@@ -1,34 +1,8 @@
 #!/bin/bash
 
-# Function: get or update app
-get_or_update_app() {
-    APP_NAME=$1
-    REPO_URL=$2
-    SITE=$3
-
-    if [ -d "apps/${APP_NAME}" ]; then
-        echo "App ${APP_NAME} already exists. Pulling latest changes..."
-        cd apps/${APP_NAME}
-        git pull origin main || git pull origin master || echo "Failed to pull latest changes, continuing with existing version"
-        cd ../../
-    else
-        echo "App ${APP_NAME} not found. Cloning from ${REPO_URL}..."
-        if ! bench get-app ${APP_NAME} ${REPO_URL}; then
-            echo "Failed to clone ${APP_NAME} from ${REPO_URL}"
-            return 1
-        fi
-    fi
-
-    # Install app on site
-    echo "Installing ${APP_NAME} on site ${SITE}..."
-    if ! bench --site ${SITE} install-app ${APP_NAME}; then
-        echo "Failed to install ${APP_NAME} on site ${SITE}"
-        return 1
-    fi
-    
-    echo "${APP_NAME} successfully installed on ${SITE}"
-}
-
+# Load common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common-functions.sh"
 
 # Init github authentication
 mkdir -p ~/.ssh
@@ -84,7 +58,6 @@ export PATH="${NVM_DIR}/versions/node/v${NODE_VERSION_DEVELOP}/bin/:${PATH}"
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
     echo "Bench already exists, skipping init"
     cd frappe-bench
-    bench start
 else
     echo "Creating new bench..."
 
@@ -110,27 +83,39 @@ else
     --no-mariadb-socket
 fi
 
-# Install the LMS app
+# Install/Update the LMS app on all sites
 if [ "$SSH_KEY_AVAILABLE" = true ]; then
-    get_or_update_app lms ${LMS_REPO_URL} ${SITE_NAME}
+    update_apps_on_all_sites lms ${LMS_REPO_URL}
 else
     # Use HTTPS URLs if SSH is not available
     LMS_HTTPS_URL=$(echo ${LMS_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
-    get_or_update_app lms ${LMS_HTTPS_URL} ${SITE_NAME}
+    update_apps_on_all_sites lms ${LMS_HTTPS_URL}
 fi
 
-# Install the AI Tutor Chat app
+# Install/Update the AI Tutor Chat app on all sites
 if [ "$SSH_KEY_AVAILABLE" = true ]; then
-    get_or_update_app ai_tutor_chat ${AI_TUTOR_REPO_URL} ${SITE_NAME}
+    update_apps_on_all_sites ai_tutor_chat ${AI_TUTOR_REPO_URL}
 else
     # Use HTTPS URLs if SSH is not available
     AI_TUTOR_HTTPS_URL=$(echo ${AI_TUTOR_REPO_URL} | sed 's/git@github.com:/https:\/\/github.com\//')
-    get_or_update_app ai_tutor_chat ${AI_TUTOR_HTTPS_URL} ${SITE_NAME}
+    update_apps_on_all_sites ai_tutor_chat ${AI_TUTOR_HTTPS_URL}
 fi
 
-bench --site ${SITE_NAME} set-config developer_mode ${DEVELOPER_MODE}
-bench --site ${SITE_NAME} set-config ai_tutor_api_url ${AI_TUTOR_API_URL}
-bench --site ${SITE_NAME} clear-cache
+# Set configurations for all sites
+apply_config_to_all_sites developer_mode ${DEVELOPER_MODE}
+apply_config_to_all_sites ai_tutor_api_url ${AI_TUTOR_API_URL}
+supervisorctl restart all
+
+# Clear cache for all sites
+clear_cache_all_sites
+
+# Set default site
 bench use ${SITE_NAME}
 
-bench start
+# Only start bench if not in production mode
+if [ "${PRODUCTION_MODE:-false}" != "true" ]; then
+    echo "Starting bench..."
+    bench start
+else
+    echo "Production mode detected, skipping bench start"
+fi
