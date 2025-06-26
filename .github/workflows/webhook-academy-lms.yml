@@ -1,0 +1,26 @@
+name: Trigger Deployment on Academy LMS Update
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    types: [ closed ]
+    branches: [ main, master ]
+
+jobs:
+  trigger-deployment:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger deployment webhook
+      run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.ACADEMY_DOCKER_PAT }}" \
+          https://api.github.com/repos/ExarLabs/academy_docker/dispatches \
+          -d '{"event_type":"academy-lms-updated"}'
+      
+    - name: Notify webhook sent
+      run: echo "✅ Deployment webhook sent to academy_docker repository"
