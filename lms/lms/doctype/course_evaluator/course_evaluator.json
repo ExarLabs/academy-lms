@@ -58,8 +58,7 @@
    "fetch_from": "evaluator.full_name",
    "fieldname": "full_name",
    "fieldtype": "Data",
-   "label": "Full Name",
-   "read_only": 1
+   "label": "Full Name"
   },
   {
    "fieldname": "column_break_casg",
@@ -73,20 +72,18 @@
    "fetch_from": "evaluator.user_image",
    "fieldname": "user_image",
    "fieldtype": "Attach Image",
-   "label": "User Image",
-   "read_only": 1
+   "label": "User Image"
   },
   {
    "fetch_from": "evaluator.username",
    "fieldname": "username",
    "fieldtype": "Data",
-   "label": "Username",
-   "read_only": 1
+   "label": "Username"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-26 14:02:46.588721",
+ "modified": "2025-07-04 12:04:11.007945",
  "modified_by": "Administrator",
  "module": "LMS",
  "name": "Course Evaluator",
@@ -133,5 +130,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "full_name"
 }

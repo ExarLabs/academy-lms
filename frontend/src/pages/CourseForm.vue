@@ -50,22 +50,28 @@
 								<div class="mb-1.5 text-xs text-ink-gray-5">
 									{{ __('Tags') }}
 								</div>
-								<div class="flex items-center">
-									<div
-										v-if="course.tags"
-										v-for="tag in course.tags?.split(', ')"
-										class="flex items-center bg-surface-gray-2 text-ink-gray-7 p-2 rounded-md mr-2"
-									>
-										{{ tag }}
-										<X
-											class="stroke-1.5 w-3 h-3 ml-2 cursor-pointer"
-											@click="removeTag(tag)"
-										/>
+								<div>
+									<div class="flex items-center flex-wrap gap-2">
+										<div
+											v-if="course.tags"
+											v-for="tag in course.tags?.split(', ')"
+											class="flex items-center bg-surface-gray-2 text-ink-gray-7 p-2 rounded-md"
+										>
+											{{ tag }}
+											<X
+												class="stroke-1.5 w-3 h-3 ml-2 cursor-pointer"
+												@click="removeTag(tag)"
+											/>
+										</div>
 									</div>
 									<FormControl
 										v-model="newTag"
 										:placeholder="__('Add a keyword and then press enter')"
-										class="w-full"
+										:class="[
+											'w-full',
+											'flex-1',
+											{ 'mt-2': course.tags?.length },
+										]"
 										@keyup.enter="updateTags()"
 										id="tags"
 									/>
@@ -100,7 +106,10 @@
 										v-slot="{ file, progress, uploading, openFileSelector }"
 									>
 										<div class="flex items-center">
-											<div class="border rounded-md w-fit py-5 px-20">
+											<div
+												class="border rounded-md w-fit py-5 px-20 cursor-pointer"
+												@click="openFileSelector"
+											>
 												<Image class="size-5 stroke-1 text-ink-gray-7" />
 											</div>
 											<div class="ml-4">
@@ -197,6 +206,21 @@
 								__(
 									'Paste the youtube link of a short video introducing the course'
 								)
+							"
+						/>
+
+						<MultiSelect
+							v-model="related_courses"
+							doctype="LMS Course"
+							:label="__('Related Courses')"
+							:filters="{ name: ['!=', courseResource.data?.name] }"
+							:onCreate="
+								(close) => {
+									router.push({
+										name: 'CourseForm',
+										params: { courseName: 'new' },
+									})
+								}
 							"
 						/>
 					</div>
@@ -309,7 +333,12 @@ import { useRouter } from 'vue-router'
 import { capture, startRecording, stopRecording } from '@/telemetry'
 import { useOnboarding } from 'frappe-ui/frappe'
 import { sessionStore } from '../stores/session'
-import { openSettings, getMetaInfo, updateMetaInfo } from '@/utils'
+import {
+	openSettings,
+	getMetaInfo,
+	updateMetaInfo,
+	validateFile,
+} from '@/utils'
 import Link from '@/components/Controls/Link.vue'
 import CourseOutline from '@/components/CourseOutline.vue'
 import MultiSelect from '@/components/Controls/MultiSelect.vue'
@@ -319,6 +348,7 @@ const newTag = ref('')
 const { brand } = sessionStore()
 const router = useRouter()
 const instructors = ref([])
+const related_courses = ref([])
 const app = getCurrentInstance()
 const { updateOnboardingStep } = useOnboarding('learning')
 const { $dialog } = app.appContext.config.globalProperties
@@ -400,6 +430,9 @@ const courseCreationResource = createResource({
 				instructors: instructors.value.map((instructor) => ({
 					instructor: instructor,
 				})),
+				related_courses: related_courses.value.map((course) => ({
+					course: course,
+				})),
 				...values,
 			},
 		}
@@ -417,6 +450,9 @@ const courseEditResource = createResource({
 				image: course.course_image?.file_url || '',
 				instructors: instructors.value.map((instructor) => ({
 					instructor: instructor,
+				})),
+				related_courses: related_courses.value.map((course) => ({
+					course: course,
 				})),
 				...course,
 			},
@@ -439,6 +475,11 @@ const courseResource = createResource({
 				instructors.value = []
 				data.instructors.forEach((instructor) => {
 					instructors.value.push(instructor.instructor)
+				})
+			} else if (key == 'related_courses') {
+				related_courses.value = []
+				data.related_courses.forEach((course) => {
+					related_courses.value.push(course.course)
 				})
 			} else if (Object.hasOwn(course, key)) course[key] = data[key]
 		})
@@ -563,13 +604,6 @@ watch(
 		}
 	}
 )
-
-const validateFile = (file) => {
-	let extension = file.name.split('.').pop().toLowerCase()
-	if (!['jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
-		return __('Only image file is allowed.')
-	}
-}
 
 const updateTags = () => {
 	if (newTag.value) {
