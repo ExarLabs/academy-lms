@@ -246,12 +246,6 @@
 				/>
 			</div>
 		</div>
-				
-		<!-- AI Tutor Chat Component -->
-		<AITutorChat 
-			:courseName="courseName"
-			:lessonTitle="lesson.data?.title"
-		/>
 	</div>
 	<VideoStatistics
 		v-model="showStatsDialog"
@@ -301,7 +295,6 @@ import CourseInstructors from '@/components/CourseInstructors.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import CertificationLinks from '@/components/CertificationLinks.vue'
 import VideoStatistics from '@/components/Modals/VideoStatistics.vue'
-import AITutorChat from '@/components/AITutorChat.vue'
 
 const user = inject('$user')
 const socket = inject('$socket')
