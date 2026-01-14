@@ -3,12 +3,13 @@
 
 import json
 import random
+
 import frappe
-from frappe.model.document import Document
-from frappe.utils import today, cint
-from lms.lms.utils import get_chapters
-from ...utils import generate_slug, validate_image, update_payment_record
 from frappe import _
+from frappe.model.document import Document
+from frappe.utils import cint, today
+
+from ...utils import generate_slug, update_payment_record, validate_image
 
 
 class LMSCourse(Document):
@@ -21,6 +22,7 @@ class LMSCourse(Document):
 		self.validate_certification()
 		self.validate_amount_and_currency()
 		self.image = validate_image(self.image)
+		self.validate_card_gradient()
 
 	def validate_published(self):
 		if self.published and not self.published_on:
@@ -59,12 +61,13 @@ class LMSCourse(Document):
 
 	def validate_certification(self):
 		if self.enable_certification and self.paid_certificate:
-			frappe.throw(
-				_("A course cannot have both paid certificate and certificate of completion.")
-			)
+			frappe.throw(_("A course cannot have both paid certificate and certificate of completion."))
 
 		if self.paid_certificate and not self.evaluator:
 			frappe.throw(_("Evaluator is required for paid certificates."))
+
+		if self.paid_certificate and not self.timezone:
+			frappe.throw(_("Timezone is required for paid certificates."))
 
 	def validate_amount_and_currency(self):
 		if self.paid_course and (cint(self.course_price) < 0 or not self.currency):
@@ -72,6 +75,24 @@ class LMSCourse(Document):
 
 		if self.paid_certificate and (cint(self.course_price) <= 0 or not self.currency):
 			frappe.throw(_("Amount and currency are required for paid certificates."))
+
+	def validate_card_gradient(self):
+		if not self.image and not self.card_gradient:
+			colors = [
+				"Red",
+				"Blue",
+				"Green",
+				"Yellow",
+				"Orange",
+				"Pink",
+				"Amber",
+				"Violet",
+				"Cyan",
+				"Teal",
+				"Gray",
+				"Purple",
+			]
+			self.card_gradient = random.choice(colors)
 
 	def on_update(self):
 		if not self.upcoming and self.has_value_changed("upcoming"):
@@ -82,9 +103,7 @@ class LMSCourse(Document):
 			update_payment_record("LMS Course", self.name)
 
 	def send_email_to_interested_users(self):
-		interested_users = frappe.get_all(
-			"LMS Course Interest", {"course": self.name}, ["name", "user"]
-		)
+		interested_users = frappe.get_all("LMS Course Interest", {"course": self.name}, ["name", "user"])
 		subject = self.title + " is available!"
 		args = {
 			"title": self.title,
@@ -103,9 +122,7 @@ class LMSCourse(Document):
 				args=args,
 				now=True,
 			)
-			frappe.enqueue(
-				method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args
-			)
+			frappe.enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
 			frappe.db.set_value("LMS Course Interest", user.name, "email_sent", True)
 
 	def autoname(self):
@@ -114,95 +131,3 @@ class LMSCourse(Document):
 
 	def __repr__(self):
 		return f"<Course#{self.name}>"
-
-	def has_mentor(self, email):
-		"""Checks if this course has a mentor with given email."""
-		if not email or email == "Guest":
-			return False
-
-		mapping = frappe.get_all(
-			"LMS Course Mentor Mapping", {"course": self.name, "mentor": email}
-		)
-		return mapping != []
-
-	def add_mentor(self, email):
-		"""Adds a new mentor to the course."""
-		if not email:
-			raise ValueError("Invalid email")
-		if email == "Guest":
-			raise ValueError("Guest user can not be added as a mentor")
-
-		# given user is already a mentor
-		if self.has_mentor(email):
-			return
-
-		doc = frappe.get_doc(
-			{"doctype": "LMS Course Mentor Mapping", "course": self.name, "mentor": email}
-		)
-		doc.insert()
-
-	def get_student_batch(self, email):
-		"""Returns the batch the given student is part of.
-
-		Returns None if the student is not part of any batch.
-		"""
-		if not email:
-			return
-
-		batch_name = frappe.get_value(
-			doctype="LMS Enrollment",
-			filters={"course": self.name, "member_type": "Student", "member": email},
-			fieldname="batch_old",
-		)
-		return batch_name and frappe.get_doc("LMS Batch Old", batch_name)
-
-	def get_batches(self, mentor=None):
-		batches = frappe.get_all("LMS Batch Old", {"course": self.name})
-		if mentor:
-			# TODO: optimize this
-			memberships = frappe.db.get_all("LMS Enrollment", {"member": mentor}, ["batch_old"])
-			batch_names = {m.batch_old for m in memberships}
-			return [b for b in batches if b.name in batch_names]
-
-	def get_cohorts(self):
-		return frappe.get_all(
-			"Cohort",
-			{"course": self.name},
-			["name", "slug", "title", "begin_date", "end_date"],
-			order_by="creation",
-		)
-
-	def get_cohort(self, cohort_slug):
-		name = frappe.get_value("Cohort", {"course": self.name, "slug": cohort_slug})
-		return name and frappe.get_doc("Cohort", name)
-
-	def reindex_exercises(self):
-		for i, c in enumerate(get_chapters(self.name), start=1):
-			self._reindex_exercises_in_chapter(c, i)
-
-	def _reindex_exercises_in_chapter(self, c, index):
-		i = 1
-		for lesson in self.get_lessons(c):
-			for exercise in lesson.get_exercises():
-				exercise.index_ = i
-				exercise.index_label = f"{index}.{i}"
-				exercise.save()
-				i += 1
-
-	def get_all_memberships(self, member):
-		all_memberships = frappe.get_all(
-			"LMS Enrollment", {"member": member, "course": self.name}, ["batch_old"]
-		)
-		for membership in all_memberships:
-			membership.batch_title = frappe.db.get_value(
-				"LMS Batch Old", membership.batch_old, "title"
-			)
-		return all_memberships
-
-
-@frappe.whitelist()
-def reindex_exercises(doc):
-	course_data = json.loads(doc)
-	course = frappe.get_doc("LMS Course", course_data["name"])
-	course.reindex_exercises()
-	frappe.msgprint("All exercises in this course have been re-indexed.")

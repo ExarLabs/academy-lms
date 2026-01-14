@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div v-if="quizzes.length && !showQuiz && readOnly" class="leading-5">
+		<div v-if="quizzes.length && !showQuiz && readOnly" class="leading-6">
 			{{
 				__('This video contains {0} {1}:').format(
 					quizzes.length,
@@ -171,7 +171,7 @@ const showQuizLoader = ref(false)
 const quizLoadTimer = ref(0)
 const currentQuiz = ref(null)
 const nextQuiz = ref({})
-const { preventSkippingVideos } = useSettings()
+const { settings } = useSettings()
 
 const props = defineProps({
 	file: {
@@ -299,7 +299,7 @@ const toggleMute = () => {
 
 const changeCurrentTime = () => {
 	if (
-		preventSkippingVideos.data &&
+		settings.data?.prevent_skipping_videos &&
 		currentTime.value > videoRef.value.currentTime
 	)
 		return

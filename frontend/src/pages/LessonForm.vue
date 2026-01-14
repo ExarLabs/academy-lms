@@ -142,7 +142,6 @@ const renderEditor = (holder) => {
 	return new EditorJS({
 		holder: holder,
 		tools: getEditorTools(true),
-		autofocus: true,
 		defaultBlock: 'markdown',
 		onChange: async (api, event) => {
 			enablePlyr()
@@ -712,17 +711,6 @@ iframe {
 	position: relative;
 	display: inline-block;
 	width: 100%;
-}
-
-.cdx-block.embed-tool::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: transparent;
-	z-index: 1000;
 }
 
 :root {

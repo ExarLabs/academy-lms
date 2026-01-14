@@ -26,45 +26,72 @@
 		</header>
 		<div>
 			<div
-				class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:items-center justify-between w-full md:w-4/5 mx-auto p-5"
+				class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:items-center justify-between w-full md:w-4/5 mx-auto mb-2 p-5"
 			>
-				<div class="text-xl font-semibold text-ink-gray-7 mb-4 md:mb-0">
-					{{ __('{0} Open Jobs').format(jobCount) }}
+				<div class="flex items-center justify-between">
+					<div class="text-xl font-semibold text-ink-gray-9 md:mb-0">
+						{{ __('{0} {1} Jobs').format(jobCount, activeTab) }}
+					</div>
+					<TabButtons
+						v-if="tabs.length > 1"
+						v-model="activeTab"
+						:buttons="tabs"
+						class="lg:hidden"
+						@change="updateJobs"
+					/>
 				</div>
 
 				<div
-					class="grid grid-cols-1 gap-2"
-					:class="user.data ? 'md:grid-cols-3' : 'md:grid-cols-2'"
+					class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0"
 				>
-					<FormControl
-						type="text"
-						:placeholder="__('Search')"
-						v-model="searchQuery"
-						class="min-w-40 lg:min-w-0 lg:w-32 xl:w-40"
-						@input="updateJobs"
-					>
-						<template #prefix>
-							<Search
-								class="w-4 h-4 stroke-1.5 text-ink-gray-5"
-								name="search"
-							/>
-						</template>
-					</FormControl>
-					<Link
-						v-if="user.data"
-						doctype="Country"
-						v-model="country"
-						:placeholder="__('Country')"
-						class="min-w-40 lg:min-w-0 lg:w-32 xl:w-40"
-					/>
-					<FormControl
-						v-model="jobType"
-						type="select"
-						:options="jobTypes"
-						class="min-w-40 lg:min-w-0 lg:w-32 xl:w-40"
-						:placeholder="__('Type')"
+					<TabButtons
+						v-if="tabs.length > 1"
+						v-model="activeTab"
+						:buttons="tabs"
+						class="hidden lg:block"
 						@change="updateJobs"
 					/>
+					<div class="grid grid-cols-2 gap-4">
+						<FormControl
+							type="text"
+							:placeholder="__('Search')"
+							v-model="searchQuery"
+							class="w-full max-w-40"
+							@input="updateJobs"
+						>
+							<template #prefix>
+								<Search
+									class="w-4 h-4 stroke-1.5 text-ink-gray-5"
+									name="search"
+								/>
+							</template>
+						</FormControl>
+						<Link
+							v-if="user.data"
+							doctype="Country"
+							v-model="country"
+							:placeholder="__('Country')"
+							class="w-full"
+						/>
+					</div>
+					<div class="grid grid-cols-2 gap-4">
+						<FormControl
+							v-model="jobType"
+							type="select"
+							:options="jobTypes"
+							class="w-full"
+							:placeholder="__('Type')"
+							@change="updateJobs"
+						/>
+						<FormControl
+							v-model="workMode"
+							type="select"
+							:options="workModes"
+							class="w-full"
+							:placeholder="__('Work Mode')"
+							@change="updateJobs"
+						/>
+					</div>
 				</div>
 			</div>
 			<div v-if="jobs.data?.length" class="w-full md:w-4/5 mx-auto p-5 pt-0">
@@ -92,6 +119,7 @@ import {
 	call,
 	createResource,
 	FormControl,
+	TabButtons,
 	usePageMeta,
 } from 'frappe-ui'
 import { Plus, Search } from 'lucide-vue-next'
@@ -103,20 +131,72 @@ import EmptyState from '@/components/EmptyState.vue'
 
 const user = inject('$user')
 const jobType = ref(null)
+const workMode = ref(null)
 const { brand } = sessionStore()
 const searchQuery = ref('')
 const country = ref(null)
 const filters = ref({})
 const orFilters = ref({})
 const jobCount = ref(0)
+const closedJobs = ref(0)
+const activeTab = ref('Open')
 const readOnlyMode = window.read_only_mode
 
 onMounted(() => {
+	getClosedJobCount()
+	setFiltersFromURL()
+	updateJobs()
+})
+
+const isModerator = computed(() => {
+	return user.data?.is_moderator
+})
+
+const getClosedJobCount = () => {
+	if (!user.data?.name) {
+		return
+	}
+
+	const filters = {
+		status: 'Closed',
+	}
+
+	if (!isModerator.value) {
+		filters.owner = user.data?.name
+	}
+
+	call('frappe.client.get_count', {
+		doctype: 'Job Opportunity',
+		filters: filters,
+	}).then((count) => {
+		closedJobs.value = count
+	})
+}
+
+const setFiltersFromURL = () => {
 	let queries = new URLSearchParams(location.search)
 	if (queries.has('type')) {
 		jobType.value = queries.get('type')
 	}
-	updateJobs()
+	if (queries.has('work_mode')) {
+		workMode.value = queries.get('work_mode')
+	}
+}
+
+const tabs = computed(() => {
+	const tabsArray = [
+		{
+			label: __('Open'),
+		},
+	]
+
+	if (closedJobs.value) {
+		tabsArray.push({
+			label: __('Closed'),
+		})
+	}
+
+	return tabsArray
 })
 
 const jobs = createResource({
@@ -137,12 +217,17 @@ const updateJobs = () => {
 
 const updateFilters = () => {
 	filters.value.status = 'Open'
-	filters.value.disabled = 0
 
 	if (jobType.value) {
 		filters.value.type = jobType.value
 	} else {
 		delete filters.value.type
+	}
+
+	if (workMode.value) {
+		filters.value.work_mode = workMode.value
+	} else {
+		delete filters.value.work_mode
 	}
 
 	if (searchQuery.value) {
@@ -160,7 +245,21 @@ const updateFilters = () => {
 	} else {
 		delete filters.value.country
 	}
+
+	if (activeTab.value === 'Closed') {
+		filters.value.status = 'Closed'
+		if (!isModerator.value) {
+			filters.value.owner = user.data?.name
+		}
+	} else {
+		filters.value.status = 'Open'
+		delete filters.value.owner
+	}
 }
+
+watch(activeTab, (val) => {
+	updateJobs()
+})
 
 watch(country, (val) => {
 	updateJobs()
@@ -172,11 +271,20 @@ watch(jobs, () => {
 
 const jobTypes = computed(() => {
 	return [
-		'',
+		{ label: '', value: '' },
 		{ label: __('Full Time'), value: 'Full Time' },
 		{ label: __('Part Time'), value: 'Part Time' },
 		{ label: __('Contract'), value: 'Contract' },
 		{ label: __('Freelance'), value: 'Freelance' },
+	]
+})
+
+const workModes = computed(() => {
+	return [
+		{ label: '', value: '' },
+		{ label: 'On site', value: 'On-site' },
+		{ label: 'Hybrid', value: 'Hybrid' },
+		{ label: 'Remote', value: 'Remote' },
 	]
 })
 

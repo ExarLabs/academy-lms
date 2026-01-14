@@ -1,5 +1,6 @@
 import frappe
 from frappe.desk.page.setup_wizard.setup_wizard import add_all_roles_to
+
 from lms.lms.api import give_discussions_permission
 
 
@@ -135,7 +136,7 @@ def delete_custom_fields():
 		"medium",
 		"linkedin",
 		"profession",
-		"looking_for_job",
+		"open_to",
 		"cover_image" "work_environment",
 		"dream_companies",
 		"career_preference_column",

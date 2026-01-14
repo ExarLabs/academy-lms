@@ -1,5 +1,6 @@
 import { call, toast } from 'frappe-ui'
 import { useTimeAgo } from '@vueuse/core'
+import colorsJSON from '@/utils/frappe-ui-colors.json'
 import { Quiz } from '@/utils/quiz'
 import { Program } from '@/utils/program'
 import { Assignment } from '@/utils/assignment'
@@ -18,6 +19,7 @@ import SimpleImage from '@editorjs/simple-image'
 import Table from '@editorjs/table'
 import Plyr from 'plyr'
 import 'plyr/dist/plyr.css'
+import DOMPurify from 'dompurify'
 
 const readOnlyMode = window.read_only_mode
 
@@ -401,55 +403,174 @@ export function getUserTimezone() {
 }
 
 export function getSidebarLinks() {
+	let links = getSidebarItems()
+
+	links.forEach((link) => {
+		link.items = link.items.filter((item) => {
+			return item.condition ? item.condition() : true
+		})
+	})
+
+	links = links.filter((link) => {
+		return link.items.length > 0
+	})
+
+	return links
+}
+
+const getSidebarItems = () => {
+	const { userResource } = usersStore()
+	const { settings } = useSettings()
+
 	return [
 		{
-			label: 'Courses',
-			icon: 'BookOpen',
-			to: 'Courses',
-			activeFor: [
-				'Courses',
-				'CourseDetail',
-				'Lesson',
-				'CourseForm',
-				'LessonForm',
+			label: 'General',
+			hideLabel: true,
+			items: [
+				{
+					label: 'Home',
+					icon: 'Home',
+					to: 'Home',
+					condition: () => {
+						return userResource?.data
+					},
+				},
+				{
+					label: 'Search',
+					icon: 'Search',
+					to: 'Search',
+					condition: () => {
+						return userResource?.data
+					},
+				},
+				{
+					label: 'Notifications',
+					icon: 'Bell',
+					to: 'Notifications',
+					condition: () => {
+						return userResource?.data
+					},
+				},
 			],
 		},
 		{
-			label: 'Batches',
-			icon: 'Users',
-			to: 'Batches',
-			activeFor: ['Batches', 'BatchDetail', 'Batch', 'BatchForm'],
-		},
-		{
-			label: 'Programming Exercises',
-			icon: 'Code',
-			to: 'ProgrammingExercises',
-			activeFor: [
-				'ProgrammingExercises',
-				'ProgrammingExerciseForm',
-				'ProgrammingExerciseSubmissions',
-				'ProgrammingExerciseSubmission',
+			label: 'Learning',
+			hideLabel: true,
+			items: [
+				{
+					label: 'Courses',
+					icon: 'BookOpen',
+					to: 'Courses',
+					activeFor: [
+						'Courses',
+						'CourseDetail',
+						'Lesson',
+						'CourseForm',
+						'LessonForm',
+					],
+				},
+				{
+					label: 'Programs',
+					icon: 'Route',
+					to: 'Programs',
+					activeFor: ['Programs', 'ProgramDetail'],
+					await: true,
+					condition: () => {
+						return checkIfCanAddProgram()
+					},
+				},
+				{
+					label: 'Batches',
+					icon: 'Users',
+					to: 'Batches',
+					activeFor: ['Batches', 'BatchDetail', 'Batch', 'BatchForm'],
+				},
+				{
+					label: 'Certifications',
+					icon: 'GraduationCap',
+					to: 'CertifiedParticipants',
+					activeFor: ['CertifiedParticipants'],
+				},
+				{
+					label: 'Jobs',
+					icon: 'Briefcase',
+					to: 'Jobs',
+					activeFor: ['Jobs', 'JobDetail'],
+				},
+				{
+					label: 'Statistics',
+					icon: 'TrendingUp',
+					to: 'Statistics',
+					activeFor: ['Statistics'],
+				},
+				{
+					label: 'Contact Us',
+					icon: settings.data?.contact_us_url ? 'Headset' : 'Mail',
+					to: settings.data?.contact_us_url
+						? settings.data?.contact_us_url
+						: settings.data?.contact_us_email,
+					condition: () => {
+						return (
+							settings?.data?.contact_us_email ||
+							settings?.data?.contact_us_url
+						)
+					},
+				},
 			],
 		},
 		{
-			label: 'Certified Members',
-			icon: 'GraduationCap',
-			to: 'CertifiedParticipants',
-			activeFor: ['CertifiedParticipants'],
-		},
-		{
-			label: 'Jobs',
-			icon: 'Briefcase',
-			to: 'Jobs',
-			activeFor: ['Jobs', 'JobDetail'],
-		},
-		{
-			label: 'Statistics',
-			icon: 'TrendingUp',
-			to: 'Statistics',
-			activeFor: ['Statistics'],
+			label: 'Assessments',
+			hideLabel: true,
+			items: [
+				{
+					label: 'Quizzes',
+					icon: 'CircleHelp',
+					to: 'Quizzes',
+					condition: () => {
+						return isAdmin()
+					},
+				},
+				{
+					label: 'Assignments',
+					icon: 'Pencil',
+					to: 'Assignments',
+					condition: () => {
+						return isAdmin()
+					},
+				},
+				{
+					label: 'Programming Exercises',
+					icon: 'Code',
+					to: 'ProgrammingExercises',
+					condition: () => {
+						return isAdmin()
+					},
+				},
+			],
 		},
 	]
+}
+
+const isAdmin = () => {
+	const { userResource } = usersStore()
+	return (
+		userResource?.data?.is_instructor ||
+		userResource?.data?.is_moderator ||
+		userResource.data?.is_evaluator
+	)
+}
+
+const checkIfCanAddProgram = () => {
+	const { userResource } = usersStore()
+	const { programs } = useSettings()
+	if (!userResource.data) return false
+	if (userResource?.data?.is_moderator || userResource?.data?.is_instructor) {
+		return true
+	}
+	return (
+		programs.data?.enrolled.length > 0 ||
+		programs.data?.published.length > 0
+	)
 }
 
 export function getFormattedDateRange(
@@ -497,14 +618,39 @@ export function singularize(word) {
 	)
 }
 
-export const validateFile = (file, showToast = true) => {
-	if (!file.type.startsWith('image/')) {
-		const errorMessage = __('Only image file is allowed.')
-		if (showToast) {
-			toast.error(errorMessage)
-		}
-		return errorMessage
+export const validateFile = async (file, showToast = true) => {
+	const error = (msg) => {
+		if (showToast) toast.error(msg)
+		console.error(msg)
+		return msg
 	}
+
+	if (!file.type.startsWith('image/')) {
+		return error(__('Only image file is allowed.'))
+	}
+
+	if (file.type === 'image/svg+xml') {
+		const text = await file.text()
+
+		const blacklist = [
+			/<script[\s>]/i,
+			/on\w+=["']?/i,
+			/javascript:/i,
+			/data:/i,
+			/<iframe[\s>]/i,
+			/<object[\s>]/i,
+			/<embed[\s>]/i,
+			/<link[\s>]/i,
+		]
+
+		for (const pattern of blacklist) {
+			if (pattern.test(text)) {
+				return error(__('SVG contains potentially unsafe content.'))
+			}
+		}
+	}
+
+	return null
 }
 
 export const escapeHTML = (text) => {
@@ -523,6 +669,26 @@ export const escapeHTML = (text) => {
 		/[&<>"'`=]/g,
 		(char) => escape_html_mapping[char] || char
 	)
+}
+
+export const sanitizeHTML = (text) => {
+	text = DOMPurify.sanitize(decodeEntities(text), {
+		ALLOWED_TAGS: [
+			'b',
+			'i',
+			'em',
+			'strong',
+			'a',
+			'p',
+			'br',
+			'ul',
+			'ol',
+			'li',
+			'img',
+		],
+		ALLOWED_ATTR: ['href', 'target', 'src'],
+	})
+	return text
 }
 
 export const canCreateCourse = () => {
@@ -551,11 +717,10 @@ export const enablePlyr = async () => {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const setupPlyrForVideo = (video, players) => {
-	const src = video.getAttribute('src') || video.getAttribute('data-src')
+	const src = video.getAttribute('src')
 
 	if (src) {
 		const videoID = extractYouTubeId(src)
-		video.setAttribute('data-plyr-provider', 'youtube')
 		video.setAttribute('data-plyr-embed-id', videoID)
 	}
 
@@ -577,7 +742,7 @@ const setupPlyrForVideo = (video, players) => {
 				const current_time = player.currentTime
 				const newTime = getTargetTime(player, e)
 				if (
-					useSettings().preventSkippingVideos.data &&
+					useSettings().settings.data?.prevent_skipping_videos &&
 					parseFloat(newTime) > current_time
 				) {
 					e.preventDefault()
@@ -661,7 +826,7 @@ export const getMetaInfo = (type, route, meta) => {
 
 export const updateMetaInfo = (type, route, meta) => {
 	call('lms.lms.api.update_meta_info', {
-		type: type,
+		meta_type: type,
 		route: route,
 		meta_tags: [
 			{ key: 'description', value: meta.description },
@@ -675,7 +840,125 @@ export const updateMetaInfo = (type, route, meta) => {
 
 export const formatTimestamp = (seconds) => {
 	const date = new Date(seconds * 1000)
+	const hours = String(date.getUTCHours()).padStart(2, '0')
 	const minutes = String(date.getUTCMinutes()).padStart(2, '0')
 	const secs = String(date.getUTCSeconds()).padStart(2, '0')
-	return `${minutes}:${secs}`
+	return hours > 0 ? `${hours}:${minutes}:${secs}` : `${minutes}:${secs}`
+}
+
+const getRootNode = (selector = '#editor') => {
+	const root = document.querySelector(selector)
+	if (!root) {
+		console.warn(`Root node not found for selector: ${selector}`)
+	}
+	return root
+}
+
+const createTextWalker = (root, phrase) => {
+	return document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+		acceptNode(node) {
+			return node.nodeValue.toLowerCase().includes(phrase.toLowerCase())
+				? NodeFilter.FILTER_ACCEPT
+				: NodeFilter.FILTER_SKIP
+		},
+	})
+}
+
+const findMatchingTextNode = (walker, phrase) => {
+	const node = walker.nextNode()
+	if (!node) return null
+
+	const startIndex = node.nodeValue
+		.toLowerCase()
+		.indexOf(phrase.toLowerCase())
+	const endIndex = startIndex + phrase.length
+
+	return { node, startIndex, endIndex }
+}
+
+const createHighlightSpan = (color, name, scrollIntoView) => {
+	const span = document.createElement('span')
+	span.className = 'highlighted-text'
+	if (scrollIntoView) {
+		span.style.border = `2px solid ${getColor(color, 400)}`
+		span.style.borderRadius = '4px'
+	} else {
+		span.style.backgroundColor = getColor(color, 200)
+	}
+	span.dataset.name = name
+	return span
+}
+
+const wrapRangeInHighlight = (
+	{ node, startIndex, endIndex },
+	color,
+	name,
+	scrollIntoView
+) => {
+	const range = document.createRange()
+	range.setStart(node, startIndex)
+	range.setEnd(node, endIndex)
+
+	const span = createHighlightSpan(color, name, scrollIntoView)
+	range.surroundContents(span)
+}
+
+export const highlightText = (note, scrollIntoView = false) => {
+	if (!note?.highlighted_text) return
+
+	const root = getRootNode()
+	if (!root) return
+
+	const phrase = note.highlighted_text
+	const color = note.color.toLowerCase()
+
+	const walker = createTextWalker(root, phrase)
+	const match = findMatchingTextNode(walker, phrase)
+	if (!match) return
+
+	wrapRangeInHighlight(match, color, note.name, scrollIntoView)
+
+	if (scrollIntoView) {
+		match.node.parentElement.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+		})
+		setTimeout(() => {
+			const highlightedElements =
+				document.querySelectorAll('.highlighted-text')
+			highlightedElements.forEach((el) => {
+				if (el.dataset.name === note.name) {
+					el.style.border = 'none'
+					el.style.borderRadius = '0px'
+				}
+			})
+		}, 3000)
+	}
+}
+
+export const scrollToReference = (text) => {
+	highlightText({ highlighted_text: text, color: 'yellow', name: '' }, true)
+}
+
+export const blockQuotesClick = () => {
+	document.querySelectorAll('blockquote').forEach((el) => {
+		el.addEventListener('click', (e) => {
+			const text = e.target.textContent || ''
+			if (text) {
+				scrollToReference(text)
+			}
+		})
+	})
+}
+
+export const decodeEntities = (encodedString) => {
+	const textarea = document.createElement('textarea')
+	textarea.innerHTML = encodedString
+	return textarea.value
+}
+
+export const getColor = (color, shade) => {
+	let theme =
+		localStorage.getItem('theme') == 'light' ? 'lightMode' : 'darkMode'
+	return colorsJSON[theme][color][shade]
 }

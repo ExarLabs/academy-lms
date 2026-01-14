@@ -2,7 +2,9 @@
 	<Dialog v-model="show" :options="{ size: '5xl' }">
 		<template #body>
 			<div class="flex h-[calc(100vh_-_8rem)]">
-				<div class="flex w-52 shrink-0 flex-col bg-surface-gray-2 p-2">
+				<div
+					class="flex w-52 shrink-0 flex-col bg-surface-gray-2 p-2 overflow-y-auto"
+				>
 					<h1 class="mb-3 px-2 pt-2 text-lg font-semibold text-ink-gray-9">
 						{{ __('Settings') }}
 					</h1>
@@ -14,25 +16,20 @@
 							<span>{{ __(tab.label) }}</span>
 						</div>
 						<nav class="space-y-1">
-							<SidebarLink
-								v-for="item in tab.items"
-								:link="item"
-								:key="item.label"
-								class="w-full"
-								:class="
-									activeTab?.label == item.label
-										? 'bg-surface-selected shadow-sm'
-										: 'hover:bg-surface-gray-2'
-								"
-								@click="activeTab = item"
-							/>
+							<div v-for="item in tab.items" @click="activeTab = item">
+								<SidebarLink
+									:link="item"
+									:key="item.label"
+									:activeTab="activeTab?.label"
+								/>
+							</div>
 						</nav>
 					</div>
 				</div>
 				<div
 					v-if="activeTab && data.doc"
 					:key="activeTab.label"
-					class="flex flex-1 flex-col px-10 py-8 bg-surface-modal"
+					class="flex flex-1 flex-col p-8 bg-surface-modal overflow-x-auto"
 				>
 					<component
 						v-if="activeTab.template"
@@ -40,18 +37,23 @@
 						v-bind="{
 							label: activeTab.label,
 							description: activeTab.description,
-							...(activeTab.label === 'Branding'
+							...(activeTab.label == 'Branding'
 								? { fields: activeTab.fields }
+								: {}),
+							...(activeTab.label == 'Evaluators' ||
+							activeTab.label == 'Members' ||
+							activeTab.label == 'Transactions'
+								? { 'onUpdate:show': (val) => (show = val), show }
 								: {}),
 						}"
 					/>
-					<PaymentSettings
-						v-else-if="activeTab.label === 'Payment Gateway'"
+					<!-- <PaymentSettings
+						v-else-if="activeTab.label === 'Gateways'"
 						:label="activeTab.label"
 						:description="activeTab.description"
 						:data="data"
 						:fields="activeTab.fields"
-					/>
+					/> -->
 					<SettingDetails
 						v-else
 						:fields="activeTab.fields"
@@ -69,13 +71,15 @@ import { Dialog, createDocumentResource } from 'frappe-ui'
 import { computed, markRaw, ref, watch } from 'vue'
 import { useSettings } from '@/stores/settings'
 import SettingDetails from '@/components/Settings/SettingDetails.vue'
-import SidebarLink from '@/components/SidebarLink.vue'
+import SidebarLink from '@/components/Sidebar/SidebarLink.vue'
 import Members from '@/components/Settings/Members.vue'
 import Evaluators from '@/components/Settings/Evaluators.vue'
 import Categories from '@/components/Settings/Categories.vue'
 import EmailTemplates from '@/components/Settings/EmailTemplates.vue'
 import BrandSettings from '@/components/Settings/BrandSettings.vue'
-import PaymentSettings from '@/components/Settings/PaymentSettings.vue'
+import PaymentGateways from '@/components/Settings/PaymentGateways.vue'
+import Coupons from '@/components/Settings/Coupons/Coupons.vue'
+import Transactions from '@/components/Settings/Transactions/Transactions.vue'
 import ZoomSettings from '@/components/Settings/ZoomSettings.vue'
 import Badges from '@/components/Settings/Badges.vue'
 
@@ -110,18 +114,18 @@ const tabsStructure = computed(() => {
 							type: 'checkbox',
 						},
 						{
-							label: 'Enable Learning Paths',
-							name: 'enable_learning_paths',
-							description:
-								'This will ensure students follow the assigned programs in order.',
-							type: 'checkbox',
-						},
-						{
 							label: 'Prevent Skipping Videos',
 							name: 'prevent_skipping_videos',
 							type: 'checkbox',
 							description:
 								'If enabled, users will no able to move forward in a video',
+						},
+						{
+							label: 'Disable PWA',
+							name: 'disable_pwa',
+							type: 'checkbox',
+							description:
+								'If checked, users will not be able to install the application as a Progressive Web App.',
 						},
 						{
 							label: 'Send calendar invite for evaluations',
@@ -162,47 +166,23 @@ const tabsStructure = computed(() => {
 						},
 					],
 				},
-			],
-		},
-		{
-			label: 'Settings',
-			hideLabel: true,
-			items: [
 				{
-					label: 'Payment Gateway',
-					icon: 'DollarSign',
-					description:
-						'Configure the payment gateway and other payment related settings',
+					label: 'Contact Us',
+					icon: 'Phone',
 					fields: [
 						{
-							label: 'Default Currency',
-							name: 'default_currency',
-							type: 'Link',
-							doctype: 'Currency',
+							label: 'Email',
+							name: 'contact_us_email',
+							type: 'text',
+							description:
+								'Users can reach out to this email for support or inquiries.',
 						},
 						{
-							label: 'Payment Gateway',
-							name: 'payment_gateway',
-							type: 'Link',
-							doctype: 'Payment Gateway',
-						},
-						{
-							type: 'Column Break',
-						},
-						{
-							label: 'Apply GST for India',
-							name: 'apply_gst',
-							type: 'checkbox',
-						},
-						{
-							label: 'Show USD equivalent amount',
-							name: 'show_usd_equivalent',
-							type: 'checkbox',
-						},
-						{
-							label: 'Apply rounding on equivalent',
-							name: 'apply_rounding',
-							type: 'checkbox',
+							label: 'URL',
+							name: 'contact_us_url',
+							type: 'text',
+							description:
+								'Users can reach out to this URL for support or inquiries.',
 						},
 					],
 				},
@@ -256,6 +236,67 @@ const tabsStructure = computed(() => {
 			],
 		},
 		{
+			label: 'Payment',
+			hideLabel: false,
+			items: [
+				{
+					label: 'Configuration',
+					icon: 'CreditCard',
+					description: 'Manage all your payment related settings and defaults',
+					fields: [
+						{
+							label: 'Default Currency',
+							name: 'default_currency',
+							type: 'Link',
+							doctype: 'Currency',
+						},
+						{
+							label: 'Payment Gateway',
+							name: 'payment_gateway',
+							type: 'Link',
+							doctype: 'Payment Gateway',
+						},
+						{
+							type: 'Column Break',
+						},
+						{
+							label: 'Apply GST for India',
+							name: 'apply_gst',
+							type: 'checkbox',
+						},
+						{
+							label: 'Show USD equivalent amount',
+							name: 'show_usd_equivalent',
+							type: 'checkbox',
+						},
+						{
+							label: 'Apply rounding on equivalent',
+							name: 'apply_rounding',
+							type: 'checkbox',
+						},
+					],
+				},
+				{
+					label: 'Gateways',
+					icon: 'DollarSign',
+					template: markRaw(PaymentGateways),
+					description: 'Add and manage all your payment gateways',
+				},
+				{
+					label: 'Transactions',
+					icon: 'Landmark',
+					template: markRaw(Transactions),
+					description: 'View all your payment transactions',
+				},
+				{
+					label: 'Coupons',
+					icon: 'Ticket',
+					template: markRaw(Coupons),
+					description: 'Manage discount coupons for courses and batches',
+				},
+			],
+		},
+		{
 			label: 'Customize',
 			hideLabel: false,
 			items: [
@@ -273,11 +314,15 @@ const tabsStructure = computed(() => {
 							label: 'Logo',
 							name: 'banner_image',
 							type: 'Upload',
+							description:
+								'Appears in the top left corner of the application to represent your brand.',
 						},
 						{
 							label: 'Favicon',
 							name: 'favicon',
 							type: 'Upload',
+							description:
+								'Appears in the browser tab next to the page title to help users quickly identify the application.',
 						},
 					],
 				},
@@ -302,8 +347,8 @@ const tabsStructure = computed(() => {
 							type: 'checkbox',
 						},
 						{
-							label: 'Certified Members',
-							name: 'certified_members',
+							label: 'Certifications',
+							name: 'certifications',
 							type: 'checkbox',
 						},
 						{

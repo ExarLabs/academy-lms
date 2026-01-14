@@ -1,12 +1,12 @@
 <template>
-	<div v-if="user.data?.is_moderator || isStudent" class="">
+	<div v-if="isAdmin || isStudent" class="">
 		<header
 			class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
 		>
 			<Breadcrumbs class="h-7" :items="breadcrumbs" />
 			<div class="flex items-center space-x-2">
 				<Button
-					v-if="user.data?.is_moderator && batch.data?.certification"
+					v-if="isAdmin && batch.data?.certification"
 					@click="openCertificateDialog = true"
 				>
 					{{ __('Generate Certificates') }}
@@ -23,7 +23,7 @@
 		</header>
 		<div
 			v-if="batch.data"
-			class="grid grid-cols-[75%,25%] h-[calc(100vh-3.2rem)]"
+			class="grid grid-cols-1 md:grid-cols-[75%,25%] h-[calc(100vh-3.2rem)]"
 		>
 			<div class="border-r">
 				<Tabs
@@ -67,6 +67,9 @@
 								<BatchDashboard :batch="batch" :isStudent="isStudent" />
 							</div>
 							<div v-else-if="tab.label == 'Dashboard'">
+								<AdminBatchDashboard :batch="batch" />
+							</div>
+							<div v-else-if="tab.label == 'Students'">
 								<BatchStudents :batch="batch" />
 							</div>
 							<div v-else-if="tab.label == 'Classes'">
@@ -95,7 +98,7 @@
 					</template>
 				</Tabs>
 			</div>
-			<div class="p-5">
+			<div class="p-5 border-t md:border-t-0">
 				<div class="mb-10">
 					<div class="text-ink-gray-7 font-semibold mb-2">
 						{{ __('About this batch') }}
@@ -140,6 +143,20 @@
 							{{ batch.data.timezone }}
 						</span>
 					</div>
+				</div>
+				<div
+					v-if="batch.data.evaluation_end_date && isStudent"
+					class="text-sm leading-5 bg-surface-amber-1 text-ink-amber-3 p-2 rounded-md mb-10"
+				>
+					{{ __('The last day to schedule your evaluations is ') }}
+					<span class="font-medium">
+						{{
+							dayjs(batch.data.evaluation_end_date).format('DD MMMM YYYY')
+						}} </span
+					>.
+					{{
+						__('Please make sure to schedule your evaluation before this date.')
+					}}
 				</div>
 				<div v-if="dayjs().isSameOrAfter(dayjs(batch.data.start_date))">
 					<div class="text-ink-gray-7 font-semibold mb-2">
@@ -235,6 +252,7 @@ import BatchDashboard from '@/components/BatchDashboard.vue'
 import BatchCourses from '@/components/BatchCourses.vue'
 import LiveClass from '@/components/LiveClass.vue'
 import BatchStudents from '@/components/BatchStudents.vue'
+import AdminBatchDashboard from '@/components/AdminBatchDashboard.vue'
 import Assessments from '@/components/Assessments.vue'
 import Announcements from '@/components/Annoucements.vue'
 import AnnouncementModal from '@/components/Modals/AnnouncementModal.vue'
@@ -260,6 +278,13 @@ const tabs = computed(() => {
 		icon: LayoutDashboard,
 	})
 
+	if (isAdmin.value) {
+		batchTabs.push({
+			label: 'Students',
+			icon: ClipboardPen,
+		})
+	}
+
 	batchTabs.push({
 		label: 'Courses',
 		icon: BookOpen,
@@ -270,7 +295,7 @@ const tabs = computed(() => {
 		icon: Laptop,
 	})
 
-	if (user.data?.is_moderator) {
+	if (isAdmin.value) {
 		batchTabs.push({
 			label: 'Assessments',
 			icon: BookOpenCheck,
@@ -366,6 +391,10 @@ const canMakeAnnouncement = () => {
 
 	return user.data?.is_moderator || user.data?.is_evaluator
 }
+
+const isAdmin = computed(() => {
+	return user.data?.is_moderator || user.data?.is_evaluator
+})
 
 usePageMeta(() => {
 	return {

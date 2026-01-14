@@ -95,8 +95,8 @@
 													name: allowEdit ? 'LessonForm' : 'Lesson',
 													params: {
 														courseName: courseName,
-														chapterNumber: lesson.number.split('.')[0],
-														lessonNumber: lesson.number.split('.')[1],
+														chapterNumber: lesson.number.split('-')[0],
+														lessonNumber: lesson.number.split('-')[1],
 													},
 												}"
 											>
@@ -208,6 +208,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	lessonProgress: {
+		type: Number,
+		default: 0,
+	},
 })
 
 const outline = createResource({
@@ -224,6 +228,13 @@ const outline = createResource({
 
 watch(
 	() => props.courseName,
+	() => {
+		outline.reload()
+	}
+)
+
+watch(
+	() => props.lessonProgress,
 	() => {
 		outline.reload()
 	}
@@ -378,8 +389,8 @@ const redirectToChapter = (chapter) => {
 
 const isActiveLesson = (lessonNumber) => {
 	return (
-		route.params.chapterNumber == lessonNumber.split('.')[0] &&
-		route.params.lessonNumber == lessonNumber.split('.')[1]
+		route.params.chapterNumber == lessonNumber.split('-')[0] &&
+		route.params.lessonNumber == lessonNumber.split('-')[1]
 	)
 }
 </script>
