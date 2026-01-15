@@ -160,6 +160,7 @@ bench get-app lms git@github.com:ExarLabs/academy-lms.git
 Alternative for HTTPS:
 ```bash
 # If SSH is not configured, use HTTPS (requires token for private repos)
+# Optionally you can specify the branch also by adding: --branch <branch_name>
 bench get-app lms https://github.com/ExarLabs/academy-lms.git
 ```
 
@@ -270,3 +271,4 @@ bench --site academy.local restore [backup-file]
 This Frappe application contains the backend implementation of the AI Tutor Chat.
 It defines the endpoints that are called by the AI Tutor Chat Vue component integrated into the LMS app.
 This application will act as a proxy between the LMS app and the LangChain service.
+
