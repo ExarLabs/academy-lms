@@ -262,6 +262,13 @@
 							/>
 						</div>
 					</div>
+					<!-- AI Tutor Section -->
+					<div v-if="user && lesson.data.membership" class="mt-10 px-5">
+						<AiTutorChat
+							:courseName="courseName"
+							:lessonName="lesson.data.name"
+						/>
+					</div>
 					<div
 						v-if="lesson.data"
 						class="mt-10 pb-20 pt-5 border-t px-5"
@@ -378,6 +385,7 @@ import CourseOutline from '@/components/CourseOutline.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import Notes from '@/components/Notes/Notes.vue'
 import InlineLessonMenu from '@/components/Notes/InlineLessonMenu.vue'
+import AiTutorChat from '@/components/AiTutorChat.vue'
 
 const user = inject('$user')
 const socket = inject('$socket')
