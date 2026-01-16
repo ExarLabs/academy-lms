@@ -261,13 +261,13 @@
 								:quizId="lesson.data.quiz_id"
 							/>
 						</div>
-					</div>
-					<!-- AI Tutor Section -->
-					<div v-if="user && lesson.data.membership" class="mt-10 px-5">
-						<AiTutorChat
-							:courseName="courseName"
-							:lessonName="lesson.data.name"
-						/>
+						<!-- AI Tutor Section -->
+						<div v-if="user && lesson.data.membership" class="mt-12">
+							<AiTutorChat
+								:courseName="courseName"
+								:lessonName="lesson.data.name"
+							/>
+						</div>
 					</div>
 					<div
 						v-if="lesson.data"
