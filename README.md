@@ -160,6 +160,7 @@ bench get-app lms git@github.com:ExarLabs/academy-lms.git
 Alternative for HTTPS:
 ```bash
 # If SSH is not configured, use HTTPS (requires token for private repos)
+# Optionally you can specify the branch also by adding: --branch <branch_name>
 bench get-app lms https://github.com/ExarLabs/academy-lms.git
 ```
 
