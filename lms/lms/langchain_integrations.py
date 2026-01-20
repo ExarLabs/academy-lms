@@ -4,7 +4,7 @@ import frappe
 import requests
 
 
-LANGCHAIN_SERVICE_URL = "http://langchain-service:5000/webhook"
+LANGCHAIN_SERVICE_URL = "http://langchain-service:7999/api/v1/ai/tutor/chat"
 
 
 def handle_course_progress_update(doc, method):
@@ -113,41 +113,83 @@ def handle_certificate_issued(doc, method):
 def send_to_langchain_service(**kwargs):
 	"""Background job to send data to the LangChain service."""
 	request_id = str(uuid.uuid4())
-	site_name = frappe.local.site
-	callback_url = f"https://{site_name}/api/method/lms.lms.langchain_integrations.post_langchain_response"
+	event_type = kwargs.get("event_type", "unknown")
+	user = kwargs.get("user")
+	course = kwargs.get("course")
+	lesson = kwargs.get("lesson")
 
-	payload = {
+	message = _build_event_message(event_type, kwargs)
+
+	context = {
 		"request_id": request_id,
-		"callback_url": callback_url,
-		**kwargs,
+		"event_type": event_type,
+		"course": course,
+		**{k: v for k, v in kwargs.items() if k not in ("user", "event_type", "course", "lesson")},
 	}
 
-	# Mock response for testing - LangChain service not ready yet
-	frappe.logger().info(f"Returning mock response for request_id: {request_id}")
-	mock_content = "This is a mock AI tutor response. The LangChain service is not yet available."
-	post_langchain_response(
-		request_id=request_id,
-		user=kwargs.get("user"),
-		content=mock_content,
-		course=kwargs.get("course"),
-		lesson=kwargs.get("lesson"),
-	)
-	return
+	payload = {
+		"user_id": user,
+		"message": message,
+		"current_lesson": lesson,
+		"context": context,
+	}
 
-	# TODO: Uncomment when LangChain service is ready
-	# try:
-	# 	response = requests.post(
-	# 		LANGCHAIN_SERVICE_URL,
-	# 		json=payload,
-	# 		timeout=30,
-	# 	)
-	# 	response.raise_for_status()
-	# 	frappe.logger().info(f"LangChain request sent successfully: {request_id}")
-	# except requests.exceptions.RequestException as e:
-	# 	frappe.log_error(
-	# 		title="LangChain Integration Error",
-	# 		message=f"Failed to send request {request_id} to LangChain service: {str(e)}\nPayload: {payload}",
-	# 	)
+	try:
+		print('TRYING TO SEND REQUEST')
+		response = requests.post(
+			LANGCHAIN_SERVICE_URL,
+			json=payload,
+			timeout=30,
+		)
+		print('REQUEST IS DONE')
+		response.raise_for_status()
+		frappe.logger().info(f"LangChain request sent successfully: {request_id}")
+
+		response_data = response.json()
+		content = response_data.get("response", "")
+
+		post_langchain_response(
+			request_id=request_id,
+			user=user,
+			content=content,
+			course=course,
+			lesson=lesson,
+		)
+
+	except requests.exceptions.RequestException as e:
+		frappe.log_error(
+			title="LangChain Integration Error",
+			message=f"Failed to send request {request_id} to LangChain service: {str(e)}\nPayload: {payload}",
+		)
+
+
+def _build_event_message(event_type, kwargs):
+	"""Build a descriptive message for the LangChain service based on event type."""
+	if event_type == "course_progress":
+		return f"Student progressed in course. Status: {kwargs.get('status')}"
+
+	if event_type == "quiz_submission":
+		return (
+			f"Student submitted quiz '{kwargs.get('quiz_title')}'. "
+			f"Score: {kwargs.get('score')}/{kwargs.get('score_out_of')} ({kwargs.get('percentage')}%)"
+		)
+
+	if event_type == "assignment_submission":
+		return f"Student submitted assignment '{kwargs.get('assignment_title')}'"
+
+	if event_type == "assignment_status_update":
+		return (
+			f"Assignment '{kwargs.get('assignment_title')}' status updated to: {kwargs.get('status')}. "
+			f"Comments: {kwargs.get('comments') or 'None'}"
+		)
+
+	if event_type == "enrollment":
+		return f"Student enrolled in course as {kwargs.get('member_type')}"
+
+	if event_type == "certificate_issued":
+		return f"Certificate issued for course '{kwargs.get('course_title')}'"
+
+	return f"LMS event: {event_type}"
 
 
 @frappe.whitelist(allow_guest=False)

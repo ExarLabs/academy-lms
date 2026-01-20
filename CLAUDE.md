@@ -96,13 +96,13 @@ An event-driven system that sends LMS events to an external LangChain service fo
 **Architecture:**
 1. Document events (quiz, assignment, enrollment, certificate) trigger handlers in `lms/lms/langchain_integrations.py`
 2. Handlers enqueue background jobs via `frappe.enqueue()` (requires Redis workers)
-3. Background job sends payload to LangChain service webhook
-4. LangChain service processes and calls back `post_langchain_response` API
+3. Background job sends structured payload to LangChain AI Tutor API
+4. Response received synchronously and stored via `post_langchain_response`
 5. Response stored in `Langchain Responses` DocType and pushed via `frappe.publish_realtime()`
 6. Frontend receives real-time update via Socket.IO
 
 **Key files:**
-- `lms/lms/langchain_integrations.py` - Event handlers and callback API
+- `lms/lms/langchain_integrations.py` - Event handlers, message builder, and response storage
 - `lms/lms/doctype/langchain_responses/` - DocType for storing AI responses
 - `lms/hooks.py` - Document event hooks (`doc_events` section)
 
@@ -114,7 +114,7 @@ An event-driven system that sends LMS events to an external LangChain service fo
 - `LMS Enrollment.after_insert` → `handle_enrollment`
 - `LMS Certificate.after_insert` → `handle_certificate_issued`
 
-**Config:** `LANGCHAIN_SERVICE_URL` constant (default: http://localhost:7999/webhook)
+**Config:** `LANGCHAIN_SERVICE_URL` constant (default: http://langchain-service:7999/api/v1/ai/tutor/chat)
 
 ### URL Routing
 Frontend routes are under `/lms/*` and handled by Vue Router. Key patterns:
