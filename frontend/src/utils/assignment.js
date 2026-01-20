@@ -4,6 +4,7 @@ import AssessmentPlugin from '@/components/AssessmentPlugin.vue'
 import translationPlugin from '../translation'
 import { usersStore } from '@/stores/user'
 import { call } from 'frappe-ui'
+import router from '@/router'
 
 export class Assignment {
 	constructor({ data, api, readOnly }) {
@@ -58,7 +59,9 @@ export class Assignment {
 		}
 		call('frappe.client.get_value', {
 			doctype: 'LMS Assignment',
-			name: assignment,
+			filters: {
+				name: assignment,
+			},
 			fieldname: ['title'],
 		}).then((data) => {
 			this.wrapper.innerHTML = `<div class='border rounded-md p-4 text-center bg-surface-menu-bar mb-4'>
@@ -82,6 +85,7 @@ export class Assignment {
 			},
 		})
 		app.use(translationPlugin)
+		app.use(router)
 		app.mount(this.wrapper)
 	}
 

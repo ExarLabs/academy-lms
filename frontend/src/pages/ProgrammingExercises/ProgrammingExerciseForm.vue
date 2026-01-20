@@ -25,7 +25,7 @@
 						:required="true"
 					/>
 					<ChildTable
-						v-model="exercise.test_cases"
+						v-model="testCases.data"
 						:label="__('Test Cases')"
 						:columns="testCaseColumns"
 						:required="true"
@@ -105,6 +105,8 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { escapeHTML } from '@/utils'
 import {
 	Button,
 	createListResource,
@@ -113,14 +115,13 @@ import {
 	TextEditor,
 	toast,
 } from 'frappe-ui'
-import { computed, ref, watch } from 'vue'
 import {
 	ProgrammingExercise,
 	ProgrammingExercises,
 	TestCase,
 } from '@/types/programming-exercise'
-import ChildTable from '@/components/Controls/ChildTable.vue'
 import { ClipboardList, Play, Trash2 } from 'lucide-vue-next'
+import ChildTable from '@/components/Controls/ChildTable.vue'
 
 const show = defineModel()
 const exercises = defineModel<ProgrammingExercises>('exercises')
@@ -178,9 +179,7 @@ const testCases = createListResource({
 	fields: ['input', 'expected_output', 'name'],
 	cache: ['testCases', props.exerciseID],
 	parent: 'LMS Programming Exercise',
-	onSuccess(data: TestCase[]) {
-		exercise.value.test_cases = data
-	},
+	orderBy: 'idx',
 })
 
 const fetchTestCases = () => {
@@ -194,7 +193,19 @@ const fetchTestCases = () => {
 	testCases.reload()
 }
 
+const validateTitle = () => {
+	exercise.value.title = escapeHTML(exercise.value.title.trim())
+}
+
 const saveExercise = (close: () => void) => {
+	exercise.value.test_cases = testCases.data.map(
+		(tc: TestCase, index: number) => ({
+			input: tc.input,
+			expected_output: tc.expected_output,
+			idx: index + 1,
+		})
+	)
+	validateTitle()
 	if (props.exerciseID == 'new') createNewExercise(close)
 	else updateExercise(close)
 }

@@ -1,11 +1,12 @@
 # Copyright (c) 2025, Frappe and contributors
 # For license information, please see license.txt
 
-import frappe
 import json
+
+import frappe
 from frappe import _
-from frappe.model.document import Document
 from frappe.email.doctype.email_template.email_template import get_email_template
+from frappe.model.document import Document
 
 
 class LMSBatchEnrollment(Document):
@@ -14,8 +15,50 @@ class LMSBatchEnrollment(Document):
 		self.add_member_to_live_class()
 
 	def validate(self):
+		self.validate_owner()
 		self.validate_duplicate_members()
+		self.validate_payment()
+		self.validate_self_enrollment()
+		self.validate_seat_availability()
 		self.validate_course_enrollment()
+
+	def validate_owner(self):
+		if self.owner == self.member:
+			return
+
+		roles = frappe.get_roles(self.owner)
+		if "Moderator" not in roles and "Batch Evaluator" not in roles:
+			frappe.throw(_("You must be a Moderator or Batch Evaluator to enroll users in a batch."))
+
+	def validate_payment(self):
+		paid_batch = frappe.db.get_value("LMS Batch", self.batch, "paid_batch")
+		if paid_batch:
+			payment = frappe.db.exists(
+				"LMS Payment",
+				{
+					"payment_for_document_type": "LMS Batch",
+					"payment_for_document": self.batch,
+					"member": self.member,
+					"payment_received": True,
+				},
+			)
+			if not payment:
+				frappe.throw(_("Payment is required to enroll in this batch."))
+			else:
+				self.payment = payment
+
+	def validate_self_enrollment(self):
+		batch_details = frappe.db.get_value(
+			"LMS Batch", self.batch, ["allow_self_enrollment", "paid_batch"], as_dict=True
+		)
+		if batch_details.paid_batch:
+			return
+		if not batch_details.allow_self_enrollment and not self.is_admin():
+			frappe.throw(_("Enrollment in this batch is restricted. Please contact the Administrator."))
+
+	def is_admin(self):
+		roles = frappe.get_roles(frappe.session.user)
+		return "Course Creator" in roles or "Moderator" in roles or "Batch Evaluator" in roles
 
 	def validate_duplicate_members(self):
 		if frappe.db.exists(
@@ -24,10 +67,14 @@ class LMSBatchEnrollment(Document):
 		):
 			frappe.throw(_("Member already enrolled in this batch"))
 
+	def validate_seat_availability(self):
+		seat_count = frappe.db.get_value("LMS Batch", self.batch, "seat_count")
+		enrolled_count = frappe.db.count("LMS Batch Enrollment", {"batch": self.batch})
+		if seat_count and enrolled_count >= seat_count:
+			frappe.throw(_("There are no seats available in this batch."))
+
 	def validate_course_enrollment(self):
-		courses = frappe.get_all(
-			"Batch Course", filters={"parent": self.batch}, fields=["course"]
-		)
+		courses = frappe.get_all("Batch Course", filters={"parent": self.batch}, fields=["course"])
 
 		for course in courses:
 			if not frappe.db.exists(
@@ -37,12 +84,11 @@ class LMSBatchEnrollment(Document):
 				enrollment = frappe.new_doc("LMS Enrollment")
 				enrollment.course = course.course
 				enrollment.member = self.member
+				enrollment.enrollment_from_batch = self.batch
 				enrollment.save()
 
 	def add_member_to_live_class(self):
-		live_classes = frappe.get_all(
-			"LMS Live Class", {"batch_name": self.batch}, ["name", "event"]
-		)
+		live_classes = frappe.get_all("LMS Live Class", {"batch_name": self.batch}, ["name", "event"])
 
 		for live_class in live_classes:
 			if live_class.event:
@@ -68,9 +114,7 @@ def send_confirmation_email(doc):
 		outgoing_email_account = frappe.get_cached_value(
 			"Email Account", {"default_outgoing": 1, "enable_outgoing": 1}, "name"
 		)
-		if not doc.confirmation_email_sent and (
-			outgoing_email_account or frappe.conf.get("mail_login")
-		):
+		if not doc.confirmation_email_sent and (outgoing_email_account or frappe.conf.get("mail_login")):
 			send_mail(doc)
 			frappe.db.set_value(doc.doctype, doc.name, "confirmation_email_sent", 1)
 

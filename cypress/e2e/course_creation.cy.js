@@ -9,6 +9,7 @@ describe("Course Creation", () => {
 
 		// Create a course
 		cy.get("button").contains("Create").click();
+		cy.get("span").contains("New Course").click();
 		cy.wait(500);
 		cy.url().should("include", "/courses/new/edit");
 
@@ -55,6 +56,7 @@ describe("Course Creation", () => {
 			.parent()
 			.within(() => {
 				cy.get("input").click().type("frappe");
+				cy.wait(500);
 				cy.get("input")
 					.invoke("attr", "aria-controls")
 					.as("instructor_list_id");
@@ -76,7 +78,7 @@ describe("Course Creation", () => {
 		cy.button("Add Chapter").click();
 
 		cy.wait(1000);
-		cy.get("[id^=headlessui-dialog-panel-")
+		cy.get("[data-dismissable-layer]")
 			.should("be.visible")
 			.within(() => {
 				cy.get("label").contains("Title").type("Test Chapter");
@@ -98,7 +100,7 @@ describe("Course Creation", () => {
 
 		// View Course
 		cy.wait(1000);
-		cy.visit("/lms");
+		cy.visit("/lms/courses");
 		cy.closeOnboardingModal();
 
 		cy.url().should("include", "/lms/courses");
@@ -107,7 +109,7 @@ describe("Course Creation", () => {
 			cy.get("div").contains(
 				"Test Course Short Introduction to test the UI"
 			);
-			cy.get(".course-image")
+			cy.get(".bg-cover")
 				.invoke("css", "background-image")
 				.should("include", "/files/profile");
 		});
@@ -140,9 +142,10 @@ describe("Course Creation", () => {
 		);
 
 		// Add Discussion
+		cy.get("span").contains("Community").click();
 		cy.button("New Question").click();
 		cy.wait(500);
-		cy.get("[id^=headlessui-dialog-panel-").within(() => {
+		cy.get("[data-dismissable-layer]").within(() => {
 			cy.get("label").contains("Title").type("Test Discussion");
 			cy.get("div[contenteditable=true]").invoke(
 				"text",

@@ -17,8 +17,8 @@
 		}"
 	>
 		<template #body-content>
-			<div class="flex flex-col gap-4">
-				<p>
+			<div class="flex flex-col gap-4 text-base">
+				<p class="text-ink-gray-9">
 					{{
 						__(
 							'Submit your resume to proceed with your application for this position. Upon submission, it will be shared with the job poster.'
@@ -29,6 +29,7 @@
 					<FileUploader
 						:fileTypes="['.pdf']"
 						:validateFile="validateFile"
+						:uploadArgs="{ private: 1 }"
 						@success="
 							(file) => {
 								resume = file
@@ -38,6 +39,9 @@
 						<template v-slot="{ file, progress, uploading, openFileSelector }">
 							<div class="">
 								<Button @click="openFileSelector" :loading="uploading">
+									<template #prefix>
+										<Upload class="size-4 stroke-1.5" />
+									</template>
 									{{
 										uploading ? `Uploading ${progress}%` : 'Upload your resume'
 									}}
@@ -51,7 +55,7 @@
 						<FileText class="h-5 w-5 stroke-1.5 text-ink-gray-7" />
 					</div>
 					<div class="flex flex-col">
-						<span>
+						<span class="text-ink-gray-9">
 							{{ resume.file_name }}
 						</span>
 						<span class="text-sm text-ink-gray-4 mt-1">
@@ -65,7 +69,7 @@
 </template>
 <script setup>
 import { Dialog, FileUploader, Button, createResource, toast } from 'frappe-ui'
-import { FileText } from 'lucide-vue-next'
+import { FileText, Upload } from 'lucide-vue-next'
 import { ref, inject } from 'vue'
 import { getFileSize } from '@/utils/'
 
@@ -95,7 +99,7 @@ const jobApplication = createResource({
 			doc: {
 				doctype: 'LMS Job Application',
 				user: user.data?.name,
-				resume: resume.value?.file_name,
+				resume: resume.value?.file_url,
 				job: props.job,
 			},
 		}

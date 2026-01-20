@@ -56,7 +56,7 @@
 		</div>
 		<div v-if="!readOnlyMode">
 			<router-link
-				v-if="isModerator || isStudent"
+				v-if="canAccessBatch"
 				:to="{
 					name: 'Batch',
 					params: {
@@ -66,11 +66,11 @@
 			>
 				<Button variant="solid" class="w-full mt-4">
 					<template #prefix>
-						<Settings v-if="isModerator" class="size-4 stroke-1.5" />
-						<LogIn v-else class="size-4 stroke-1.5" />
+						<LogIn v-if="isStudent" class="size-4 stroke-1.5" />
+						<Settings v-else class="size-4 stroke-1.5" />
 					</template>
 					<span>
-						{{ isModerator ? __('Manage Batch') : __('Visit Batch') }}
+						{{ isStudent ? __('Visit Batch') : __('Manage Batch') }}
 					</span>
 				</Button>
 			</router-link>
@@ -113,7 +113,7 @@
 				{{ __('Enroll Now') }}
 			</Button>
 			<router-link
-				v-if="isModerator"
+				v-if="canEditBatch"
 				:to="{
 					name: 'BatchForm',
 					params: {
@@ -203,5 +203,25 @@ const isStudent = computed(() => {
 
 const isModerator = computed(() => {
 	return user.data?.is_moderator
+})
+
+const isEvaluator = computed(() => {
+	return user.data?.is_evaluator
+})
+
+const isInstructor = computed(() => {
+	return (
+		props.batch.data?.instructors?.filter(
+			(instructor) => instructor.name === user.data?.name
+		).length > 0
+	)
+})
+
+const canAccessBatch = computed(() => {
+	return isModerator.value || isStudent.value || isEvaluator.value
+})
+
+const canEditBatch = computed(() => {
+	return isModerator.value || isInstructor.value
 })
 </script>
