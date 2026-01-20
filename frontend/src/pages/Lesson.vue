@@ -439,6 +439,11 @@ onMounted(() => {
 			lessonProgress.value = data.progress
 		}
 	})
+	socket.on('langchain_response_received', (data) => {
+		toast.success(`We received an AI feedback!\n\n${data.content}`, {
+			duration: 10000,
+		})
+	})
 })
 
 const attachFullscreenEvent = () => {
@@ -457,6 +462,7 @@ onBeforeUnmount(() => {
 	document.removeEventListener('fullscreenchange', attachFullscreenEvent)
 	sidebarStore.isSidebarCollapsed = false
 	trackVideoWatchDuration()
+	socket.off('langchain_response_received')
 })
 
 const lesson = createResource({

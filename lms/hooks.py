@@ -113,6 +113,12 @@ doc_events = {
 		"validate": "lms.lms.user.validate_username_duplicates",
 		"after_insert": "lms.lms.user.after_insert",
 	},
+	"LMS Course Progress": {
+		"on_update": "lms.lms.langchain_integrations.handle_course_progress_update",
+	},
+	"LMS Quiz Submission": {
+		"after_insert": "lms.lms.langchain_integrations.handle_quiz_submission",
+	},
 }
 
 # Scheduled Tasks
