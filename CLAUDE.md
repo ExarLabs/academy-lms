@@ -69,7 +69,7 @@ Key directories:
 - `lms/lms/doctype/` - Frappe doctypes (data models with controllers)
 - `lms/lms/api.py` - Main API endpoints
 - `lms/lms/ai_tutor.py` - AI Tutor proxy to external LangChain service
-- `lms/lms/langchain_integrations.py` - LangChain event broker (quiz/progress events)
+- `lms/lms/langchain_integrations.py` - LangChain event broker (quiz/assignment/enrollment/certificate events)
 - `lms/hooks.py` - App configuration, routes, scheduled tasks, doc_events
 - `lms/patches/` - Database migration scripts
 
@@ -94,7 +94,7 @@ The AI Tutor is a chat feature integrated into lesson pages:
 An event-driven system that sends LMS events to an external LangChain service for AI processing:
 
 **Architecture:**
-1. Document events (quiz submission, course progress) trigger handlers in `lms/lms/langchain_integrations.py`
+1. Document events (quiz, assignment, enrollment, certificate) trigger handlers in `lms/lms/langchain_integrations.py`
 2. Handlers enqueue background jobs via `frappe.enqueue()` (requires Redis workers)
 3. Background job sends payload to LangChain service webhook
 4. LangChain service processes and calls back `post_langchain_response` API
@@ -109,6 +109,10 @@ An event-driven system that sends LMS events to an external LangChain service fo
 **Document event hooks:**
 - `LMS Course Progress.on_update` → `handle_course_progress_update`
 - `LMS Quiz Submission.after_insert` → `handle_quiz_submission`
+- `LMS Assignment Submission.after_insert` → `handle_assignment_submission`
+- `LMS Assignment Submission.on_update` → `handle_assignment_status_update`
+- `LMS Enrollment.after_insert` → `handle_enrollment`
+- `LMS Certificate.after_insert` → `handle_certificate_issued`
 
 **Config:** `LANGCHAIN_SERVICE_URL` constant (default: http://localhost:7999/webhook)
 

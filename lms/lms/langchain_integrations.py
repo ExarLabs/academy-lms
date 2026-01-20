@@ -40,6 +40,76 @@ def handle_quiz_submission(doc, method):
 	)
 
 
+def handle_assignment_submission(doc, method):
+	"""Handler for LMS Assignment Submission after_insert event."""
+	frappe.enqueue(
+		send_to_langchain_service,
+		queue="default",
+		enqueue_after_commit=True,
+		event_type="assignment_submission",
+		user=doc.member,
+		course=doc.course,
+		lesson=doc.lesson,
+		assignment=doc.assignment,
+		assignment_title=doc.assignment_title,
+		answer=doc.answer,
+		question=doc.question,
+		submission_type=doc.type,
+	)
+
+
+def handle_assignment_status_update(doc, method):
+	"""Handler for LMS Assignment Submission on_update event.
+
+	Only triggers if the status field has changed.
+	"""
+	if not doc.has_value_changed("status"):
+		return
+
+	frappe.enqueue(
+		send_to_langchain_service,
+		queue="default",
+		enqueue_after_commit=True,
+		event_type="assignment_status_update",
+		user=doc.member,
+		course=doc.course,
+		lesson=doc.lesson,
+		assignment=doc.assignment,
+		assignment_title=doc.assignment_title,
+		status=doc.status,
+		comments=doc.comments,
+	)
+
+
+def handle_enrollment(doc, method):
+	"""Handler for LMS Enrollment after_insert event."""
+	frappe.enqueue(
+		send_to_langchain_service,
+		queue="default",
+		enqueue_after_commit=True,
+		event_type="enrollment",
+		user=doc.member,
+		course=doc.course,
+		member_name=doc.member_name,
+		member_type=doc.member_type,
+	)
+
+
+def handle_certificate_issued(doc, method):
+	"""Handler for LMS Certificate after_insert event."""
+	frappe.enqueue(
+		send_to_langchain_service,
+		queue="default",
+		enqueue_after_commit=True,
+		event_type="certificate_issued",
+		user=doc.member,
+		course=doc.course,
+		course_title=doc.course_title,
+		issue_date=str(doc.issue_date) if doc.issue_date else None,
+		batch_name=doc.batch_name,
+	)
+
+
 def send_to_langchain_service(**kwargs):
 	"""Background job to send data to the LangChain service."""
 	request_id = str(uuid.uuid4())

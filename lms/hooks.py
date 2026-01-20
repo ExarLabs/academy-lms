@@ -119,6 +119,16 @@ doc_events = {
 	"LMS Quiz Submission": {
 		"after_insert": "lms.lms.langchain_integrations.handle_quiz_submission",
 	},
+	"LMS Assignment Submission": {
+		"after_insert": "lms.lms.langchain_integrations.handle_assignment_submission",
+		"on_update": "lms.lms.langchain_integrations.handle_assignment_status_update",
+	},
+	"LMS Enrollment": {
+		"after_insert": "lms.lms.langchain_integrations.handle_enrollment",
+	},
+	"LMS Certificate": {
+		"after_insert": "lms.lms.langchain_integrations.handle_certificate_issued",
+	},
 }
 
 # Scheduled Tasks
