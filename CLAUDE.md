@@ -69,7 +69,8 @@ Key directories:
 - `lms/lms/doctype/` - Frappe doctypes (data models with controllers)
 - `lms/lms/api.py` - Main API endpoints
 - `lms/lms/ai_tutor.py` - AI Tutor proxy to external LangChain service
-- `lms/hooks.py` - App configuration, routes, scheduled tasks
+- `lms/lms/langchain_integrations.py` - LangChain event broker (quiz/progress events)
+- `lms/hooks.py` - App configuration, routes, scheduled tasks, doc_events
 - `lms/patches/` - Database migration scripts
 
 ### Frontend (Vue SPA)
@@ -88,6 +89,28 @@ The AI Tutor is a chat feature integrated into lesson pages:
 - Backend: `lms/lms/ai_tutor.py` - `ask_tutor()` proxies to external LangChain service
 - Frontend: `frontend/src/components/AiTutorChat.vue` - Chat UI component
 - Config: Set `ai_tutor_api_url` in site config (default: http://localhost:7999)
+
+### LangChain Event Broker System
+An event-driven system that sends LMS events to an external LangChain service for AI processing:
+
+**Architecture:**
+1. Document events (quiz submission, course progress) trigger handlers in `lms/lms/langchain_integrations.py`
+2. Handlers enqueue background jobs via `frappe.enqueue()` (requires Redis workers)
+3. Background job sends payload to LangChain service webhook
+4. LangChain service processes and calls back `post_langchain_response` API
+5. Response stored in `Langchain Responses` DocType and pushed via `frappe.publish_realtime()`
+6. Frontend receives real-time update via Socket.IO
+
+**Key files:**
+- `lms/lms/langchain_integrations.py` - Event handlers and callback API
+- `lms/lms/doctype/langchain_responses/` - DocType for storing AI responses
+- `lms/hooks.py` - Document event hooks (`doc_events` section)
+
+**Document event hooks:**
+- `LMS Course Progress.on_update` → `handle_course_progress_update`
+- `LMS Quiz Submission.after_insert` → `handle_quiz_submission`
+
+**Config:** `LANGCHAIN_SERVICE_URL` constant (default: http://localhost:7999/webhook)
 
 ### URL Routing
 Frontend routes are under `/lms/*` and handled by Vue Router. Key patterns:
