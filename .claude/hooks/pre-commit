@@ -1,11 +1,16 @@
 #!/bin/bash
-set -e
+
+# Check if Claude Code CLI is installed
+if ! command -v claude &> /dev/null; then
+    echo "⚠️  Warning: Claude Code CLI is not installed. Skipping CLAUDE.md auto-update."
+    echo "   To install: npm install -g @anthropic-ai/claude-code"
+    exit 0
+fi
 
 # Get staged files (excluding CLAUDE.md itself to avoid loops)
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -v "CLAUDE.md" || true)
 
 if [ -z "$STAGED_FILES" ]; then
-    echo "No relevant staged files to analyze"
     exit 0
 fi
 
@@ -13,6 +18,7 @@ fi
 DIFF_CONTENT=$(git diff --cached --diff-filter=ACMR -- $STAGED_FILES)
 
 # Invoke Claude Code to analyze and update CLAUDE.md
+# If it fails (e.g., not authenticated), warn but don't block the commit
 claude -p "You are analyzing staged git changes to determine if CLAUDE.md needs updating.
 
 ## Staged Files:
@@ -31,6 +37,14 @@ $DIFF_CONTENT
 If no updates needed, just say 'No CLAUDE.md updates required' and exit." \
     --allowedTools "Read,Edit" \
     --max-turns 5
+
+CLAUDE_EXIT_CODE=$?
+
+if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
+    echo "⚠️  Warning: Claude Code failed (exit code $CLAUDE_EXIT_CODE). Skipping CLAUDE.md auto-update."
+    echo "   You may need to authenticate: run 'claude' in your terminal"
+    exit 0
+fi
 
 # Stage CLAUDE.md if it was modified
 if git diff --name-only CLAUDE.md | grep -q "CLAUDE.md"; then

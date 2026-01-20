@@ -146,3 +146,10 @@ Uses conventional commits (enforced by CI):
 - `docs:` documentation
 - `refactor:` code refactoring
 - `test:` test changes
+
+### CLAUDE.md Auto-Update Hook
+A pre-commit hook in `.claude/hooks/pre-commit` uses Claude Code CLI to automatically update this file when architectural changes are committed. Enable with:
+```bash
+git config core.hooksPath .claude/hooks
+```
+Skip with `git commit --no-verify` for minor changes.
