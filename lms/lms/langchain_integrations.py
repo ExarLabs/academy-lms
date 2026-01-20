@@ -4,7 +4,10 @@ import frappe
 import requests
 
 
-LANGCHAIN_SERVICE_URL = "http://langchain-service:7999/api/v1/ai/tutor/chat"
+def get_langchain_service_url():
+	"""Get LangChain service URL from site config, with localhost default for development."""
+	base_url = frappe.conf.get("langchain_service_url", "http://localhost:7999")
+	return f"{base_url}/api/v1/ai/tutor/chat"
 
 
 def handle_course_progress_update(doc, method):
@@ -135,13 +138,11 @@ def send_to_langchain_service(**kwargs):
 	}
 
 	try:
-		print('TRYING TO SEND REQUEST')
 		response = requests.post(
-			LANGCHAIN_SERVICE_URL,
+			get_langchain_service_url(),
 			json=payload,
 			timeout=30,
 		)
-		print('REQUEST IS DONE')
 		response.raise_for_status()
 		frappe.logger().info(f"LangChain request sent successfully: {request_id}")
 

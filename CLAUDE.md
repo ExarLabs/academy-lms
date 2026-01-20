@@ -114,7 +114,7 @@ An event-driven system that sends LMS events to an external LangChain service fo
 - `LMS Enrollment.after_insert` → `handle_enrollment`
 - `LMS Certificate.after_insert` → `handle_certificate_issued`
 
-**Config:** `LANGCHAIN_SERVICE_URL` constant (default: http://langchain-service:7999/api/v1/ai/tutor/chat)
+**Config:** Set `langchain_service_url` in site config (default: http://localhost:7999)
 
 ### URL Routing
 Frontend routes are under `/lms/*` and handled by Vue Router. Key patterns:
