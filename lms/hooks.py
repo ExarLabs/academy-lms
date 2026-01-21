@@ -114,20 +114,20 @@ doc_events = {
 		"after_insert": "lms.lms.user.after_insert",
 	},
 	"LMS Course Progress": {
-		"on_update": "lms.lms.langchain_integrations.handle_course_progress_update",
+		"on_update": "lms.langchain.lms_event_handlers.handle_course_progress_update",
 	},
 	"LMS Quiz Submission": {
-		"after_insert": "lms.lms.langchain_integrations.handle_quiz_submission",
+		"after_insert": "lms.langchain.lms_event_handlers.handle_quiz_submission",
 	},
 	"LMS Assignment Submission": {
-		"after_insert": "lms.lms.langchain_integrations.handle_assignment_submission",
-		"on_update": "lms.lms.langchain_integrations.handle_assignment_status_update",
+		"after_insert": "lms.langchain.lms_event_handlers.handle_assignment_submission",
+		"on_update": "lms.langchain.lms_event_handlers.handle_assignment_status_update",
 	},
 	"LMS Enrollment": {
-		"after_insert": "lms.lms.langchain_integrations.handle_enrollment",
+		"after_insert": "lms.langchain.lms_event_handlers.handle_enrollment",
 	},
 	"LMS Certificate": {
-		"after_insert": "lms.lms.langchain_integrations.handle_certificate_issued",
+		"after_insert": "lms.langchain.lms_event_handlers.handle_certificate_issued",
 	},
 }
 

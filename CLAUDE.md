@@ -68,8 +68,7 @@ bench --site academy.local list-apps        # List installed apps
 Key directories:
 - `lms/lms/doctype/` - Frappe doctypes (data models with controllers)
 - `lms/lms/api.py` - Main API endpoints
-- `lms/lms/ai_tutor.py` - AI Tutor proxy to external LangChain service
-- `lms/lms/langchain_integrations.py` - LangChain event broker (quiz/assignment/enrollment/certificate events)
+- `lms/langchain/` - LangChain integration module (AI Tutor, event broker)
 - `lms/hooks.py` - App configuration, routes, scheduled tasks, doc_events
 - `lms/patches/` - Database migration scripts
 
@@ -84,35 +83,41 @@ Key directories:
 - `frontend/src/components/` - Reusable components
 - `frontend/src/router.js` - Route definitions
 
-### AI Tutor Integration
-The AI Tutor is a chat feature integrated into lesson pages:
-- Backend: `lms/lms/ai_tutor.py` - `ask_tutor()` proxies to external LangChain service
+### LangChain Integration Module (`lms/langchain/`)
+A modular integration with external LangChain service for AI features:
+
+**Module structure:**
+```
+lms/langchain/
+├── __init__.py            # Package exports
+├── config.py              # URL helpers (get_langchain_service_url, get_ai_tutor_url)
+├── broker.py              # LangchainMessageBroker class for event dispatch
+├── lms_event_handlers.py  # 6 document event handlers
+├── service.py             # HTTP client for LangChain API
+├── messages.py            # Event message builder
+├── api.py                 # post_langchain_response() endpoint
+└── tutor.py               # ask_tutor() AI chat endpoint
+```
+
+**AI Tutor:**
+- Backend: `lms/langchain/tutor.py` - `ask_tutor()` proxies to external LangChain service
 - Frontend: `frontend/src/components/AiTutorChat.vue` - Chat UI component
 - Config: Set `ai_tutor_api_url` in site config (default: http://localhost:7999)
 
-### LangChain Event Broker System
-An event-driven system that sends LMS events to an external LangChain service for AI processing:
+**Event Broker Architecture:**
+1. Document events trigger handlers in `lms/langchain/lms_event_handlers.py`
+2. Handlers use `LangchainMessageBroker` to enqueue events via `frappe.enqueue()`
+3. Background job in `service.py` sends structured payload to LangChain API
+4. Response stored via `api.py` and pushed via `frappe.publish_realtime()`
+5. Frontend receives real-time update via Socket.IO
 
-**Architecture:**
-1. Document events (quiz, assignment, enrollment, certificate) trigger handlers in `lms/lms/langchain_integrations.py`
-2. Handlers enqueue background jobs via `frappe.enqueue()` (requires Redis workers)
-3. Background job sends structured payload to LangChain AI Tutor API
-4. Response received synchronously and stored via `post_langchain_response`
-5. Response stored in `Langchain Responses` DocType and pushed via `frappe.publish_realtime()`
-6. Frontend receives real-time update via Socket.IO
-
-**Key files:**
-- `lms/lms/langchain_integrations.py` - Event handlers, message builder, and response storage
-- `lms/lms/doctype/langchain_responses/` - DocType for storing AI responses
-- `lms/hooks.py` - Document event hooks (`doc_events` section)
-
-**Document event hooks:**
-- `LMS Course Progress.on_update` → `handle_course_progress_update`
-- `LMS Quiz Submission.after_insert` → `handle_quiz_submission`
-- `LMS Assignment Submission.after_insert` → `handle_assignment_submission`
-- `LMS Assignment Submission.on_update` → `handle_assignment_status_update`
-- `LMS Enrollment.after_insert` → `handle_enrollment`
-- `LMS Certificate.after_insert` → `handle_certificate_issued`
+**Document event hooks (configured in `hooks.py`):**
+- `LMS Course Progress.on_update` → `lms.langchain.lms_event_handlers.handle_course_progress_update`
+- `LMS Quiz Submission.after_insert` → `lms.langchain.lms_event_handlers.handle_quiz_submission`
+- `LMS Assignment Submission.after_insert` → `lms.langchain.lms_event_handlers.handle_assignment_submission`
+- `LMS Assignment Submission.on_update` → `lms.langchain.lms_event_handlers.handle_assignment_status_update`
+- `LMS Enrollment.after_insert` → `lms.langchain.lms_event_handlers.handle_enrollment`
+- `LMS Certificate.after_insert` → `lms.langchain.lms_event_handlers.handle_certificate_issued`
 
 **Config:** Set `langchain_service_url` in site config (default: http://localhost:7999)
 
