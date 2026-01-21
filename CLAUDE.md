@@ -95,7 +95,7 @@ lms/langchain/
 ├── lms_event_handlers.py  # 6 document event handlers
 ├── service.py             # HTTP client for LangChain API
 ├── messages.py            # Event message builder
-├── api.py                 # post_langchain_response() endpoint
+├── api.py                 # API endpoints (post_langchain_response, send_frontend_event)
 └── tutor.py               # ask_tutor() AI chat endpoint
 ```
 

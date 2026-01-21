@@ -23,7 +23,7 @@ from lms.langchain.lms_event_handlers import (
 )
 
 # API endpoints
-from lms.langchain.api import post_langchain_response
+from lms.langchain.api import post_langchain_response, send_frontend_event
 from lms.langchain.tutor import ask_tutor
 
 # Service functions
@@ -48,6 +48,7 @@ __all__ = [
 	"handle_certificate_issued",
 	# API
 	"post_langchain_response",
+	"send_frontend_event",
 	"ask_tutor",
 	# Service
 	"send_to_langchain_service",
