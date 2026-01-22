@@ -16,5 +16,6 @@
     "host_name": "http://lms.test:8000",
     "monitor": 1,
     "server_script_enabled": true,
-    "mute_emails": true
+    "mute_emails": true,
+    "langchain_use_redis": true
 }
