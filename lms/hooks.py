@@ -265,6 +265,11 @@ signup_form_template = "lms.plugins.show_custom_signup"
 
 on_login = "lms.lms.user.on_login"
 
+# Start the LangChain event response subscriber in web worker (long-lived process)
+before_request = [
+	"lms.langchain.event_response_subscriber.start_event_response_subscriber",
+]
+
 get_site_info = "lms.activation.get_site_info"
 
 add_to_apps_screen = [

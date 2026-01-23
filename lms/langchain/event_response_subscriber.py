@@ -33,6 +33,7 @@ class EventResponseSubscriber:
 		self._thread: Optional[threading.Thread] = None
 		self._running = False
 		self._pubsub = None
+		self._site: Optional[str] = None
 
 	@property
 	def is_running(self) -> bool:
@@ -42,11 +43,11 @@ class EventResponseSubscriber:
 	def start(self) -> None:
 		"""Start the subscriber in a background daemon thread."""
 		if self.is_running:
-			frappe.logger("langchain").warning(
-				"Event response subscriber already running"
-			)
+			print("[EventResponseSubscriber] Already running, skipping start")
 			return
 
+		# Capture site name in main thread where frappe.local is initialized
+		self._site = frappe.local.site
 		self._running = True
 		self._thread = threading.Thread(
 			target=self._listen_loop,
@@ -54,10 +55,7 @@ class EventResponseSubscriber:
 			name="EventResponseSubscriber",
 		)
 		self._thread.start()
-		frappe.logger("langchain").info(
-			"Event response subscriber started, listening on %s",
-			self.CHANNEL_PATTERN,
-		)
+		print(f"[EventResponseSubscriber] Started, listening on {self.CHANNEL_PATTERN}")
 
 	def stop(self) -> None:
 		"""Stop the subscriber gracefully."""
@@ -73,15 +71,21 @@ class EventResponseSubscriber:
 
 	def _listen_loop(self) -> None:
 		"""Main listening loop - runs in background thread."""
+		# Use site name captured from main thread (frappe.local is thread-local)
+		site = self._site
+		if not site:
+			return
 		while self._running:
 			try:
+				frappe.init(site=site)
+				frappe.connect()
 				self._subscribe_and_listen()
 			except Exception as e:
-				frappe.logger("langchain").error(
-					f"Subscriber error, reconnecting in {self.RECONNECT_DELAY}s: {e}"
-				)
+				print(f"Subscriber error, reconnecting in {self.RECONNECT_DELAY}s: {e}")
 				if self._running:
 					time.sleep(self.RECONNECT_DELAY)
+			finally:
+				frappe.destroy()
 
 	def _subscribe_and_listen(self) -> None:
 		"""Subscribe to Redis and process messages."""
@@ -89,9 +93,7 @@ class EventResponseSubscriber:
 		self._pubsub = client.pubsub()
 		self._pubsub.psubscribe(self.CHANNEL_PATTERN)
 
-		frappe.logger("langchain").debug(
-			f"Subscribed to pattern: {self.CHANNEL_PATTERN}"
-		)
+		print(f"[EventResponseSubscriber] Subscribed to pattern: {self.CHANNEL_PATTERN}")
 
 		for message in self._pubsub.listen():
 			if not self._running:
@@ -101,16 +103,14 @@ class EventResponseSubscriber:
 				try:
 					channel = message["channel"]
 					data = json.loads(message["data"])
+					print(f"[EventResponseSubscriber] Received message on {channel}: {data}")
 					self._handle_response(channel, data)
 				except json.JSONDecodeError as e:
-					frappe.logger("langchain").warning(
-						f"Invalid JSON in message: {e}"
-					)
+					print(f"[EventResponseSubscriber] Invalid JSON in message: {e}")
 				except Exception as e:
-					frappe.logger("langchain").error(
-						f"Error handling response: {e}",
-						exc_info=True,
-					)
+					print(f"[EventResponseSubscriber] Error handling response: {e}")
+					import traceback
+					traceback.print_exc()
 
 	def _handle_response(self, channel: str, data: Dict[str, Any]) -> None:
 		"""Handle a response from LangChain and forward to Socket.IO.
@@ -123,21 +123,18 @@ class EventResponseSubscriber:
 		content = data.get("content")
 
 		if not user_id or not content:
-			frappe.logger("langchain").debug(
-				f"Skipping response without user_id or content: {data}"
-			)
+			print(f"Skipping response without user_id or content: {data}")
 			return
 
 		event_type = data.get("event_type", "unknown")
 
-		frappe.logger("langchain").info(
-			f"Forwarding {event_type} response to user {user_id}"
-		)
+		print(f"Forwarding {event_type} response to user {user_id}")
 
 		# Save to Langchain Responses doctype for audit (optional)
 		self._save_response(data)
 
 		# Forward to frontend via Socket.IO - ONLY to the specific user
+		# Use after_commit=False since we're in a background thread without request context
 		frappe.publish_realtime(
 			event="langchain_response_received",
 			message={
@@ -147,7 +144,7 @@ class EventResponseSubscriber:
 				"lesson": data.get("lesson"),
 			},
 			user=user_id,
-			after_commit=True,
+			after_commit=False,
 		)
 
 	def _save_response(self, data: Dict[str, Any]) -> None:
@@ -228,9 +225,7 @@ def ensure_subscriber_running() -> None:
 
 	subscriber = get_subscriber()
 	if not subscriber.is_running:
-		frappe.logger("langchain").info(
-			"Event response subscriber not running, starting..."
-		)
+		print("[EventResponseSubscriber] Not running, starting via scheduler...")
 		subscriber.start()
 
 

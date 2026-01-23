@@ -7,7 +7,7 @@ def handle_course_progress_update(doc, method):
 	"""Handler for LMS Course Progress on_update event."""
 	broker.send(
 		event_type="course_progress",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
 		chapter=doc.chapter,
@@ -19,7 +19,7 @@ def handle_quiz_submission(doc, method):
 	"""Handler for LMS Quiz Submission after_insert event."""
 	broker.send(
 		event_type="quiz_submission",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		quiz=doc.quiz,
 		quiz_title=doc.quiz_title,
@@ -34,7 +34,7 @@ def handle_assignment_submission(doc, method):
 	"""Handler for LMS Assignment Submission after_insert event."""
 	broker.send(
 		event_type="assignment_submission",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
 		assignment=doc.assignment,
@@ -55,7 +55,7 @@ def handle_assignment_status_update(doc, method):
 
 	broker.send(
 		event_type="assignment_status_update",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
 		assignment=doc.assignment,
@@ -69,7 +69,7 @@ def handle_enrollment(doc, method):
 	"""Handler for LMS Enrollment after_insert event."""
 	broker.send(
 		event_type="enrollment",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		member_name=doc.member_name,
 		member_type=doc.member_type,
@@ -80,7 +80,7 @@ def handle_certificate_issued(doc, method):
 	"""Handler for LMS Certificate after_insert event."""
 	broker.send(
 		event_type="certificate_issued",
-		user=doc.member,
+		user_id=doc.member,
 		course=doc.course,
 		course_title=doc.course_title,
 		issue_date=str(doc.issue_date) if doc.issue_date else None,

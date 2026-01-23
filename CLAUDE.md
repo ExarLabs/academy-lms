@@ -89,14 +89,15 @@ A modular integration with external LangChain service for AI features:
 **Module structure:**
 ```
 lms/langchain/
-├── __init__.py            # Package exports
-├── config.py              # URL helpers (get_langchain_service_url, get_ai_tutor_url)
-├── broker.py              # LangchainMessageBroker class for event dispatch
-├── lms_event_handlers.py  # 6 document event handlers
-├── service.py             # HTTP client for LangChain API
-├── messages.py            # Event message builder
-├── api.py                 # API endpoints (post_langchain_response, send_frontend_event)
-└── tutor.py               # ask_tutor() AI chat endpoint
+├── __init__.py                    # Package exports
+├── config.py                      # URL helpers (get_langchain_service_url, get_ai_tutor_url)
+├── broker.py                      # LangchainMessageBroker class for event dispatch
+├── lms_event_handlers.py          # 6 document event handlers
+├── event_response_subscriber.py   # Redis pub/sub subscriber for LangChain responses
+├── service.py                     # HTTP client for LangChain API
+├── messages.py                    # Event message builder
+├── api.py                         # API endpoints (post_langchain_response, send_frontend_event)
+└── tutor.py                       # ask_tutor() AI chat endpoint
 ```
 
 **AI Tutor:**
@@ -108,8 +109,9 @@ lms/langchain/
 1. Document events trigger handlers in `lms/langchain/lms_event_handlers.py`
 2. Handlers use `LangchainMessageBroker` to enqueue events via `frappe.enqueue()`
 3. Background job in `service.py` sends structured payload to LangChain API
-4. Response stored via `api.py` and pushed via `frappe.publish_realtime()`
-5. Frontend receives real-time update via Socket.IO
+4. `EventResponseSubscriber` listens on Redis pub/sub for LangChain responses (started via `before_request` hook in web workers)
+5. Response stored and pushed via `frappe.publish_realtime()` to specific user
+6. Frontend receives real-time update via Socket.IO
 
 **Document event hooks (configured in `hooks.py`):**
 - `LMS Course Progress.on_update` → `lms.langchain.lms_event_handlers.handle_course_progress_update`
