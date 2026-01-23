@@ -37,6 +37,7 @@ class RedisEventPublisher:
 		message = {
 			"event_type": event_type,
 			"timestamp": datetime.utcnow().isoformat(),
+			"request_id": str(uuid.uuid4()),
 			**kwargs,
 		}
 
