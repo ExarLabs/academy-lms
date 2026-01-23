@@ -32,6 +32,15 @@ from lms.langchain.service import send_to_langchain_service
 # Message utilities
 from lms.langchain.messages import build_event_message
 
+# Event response subscriber
+from lms.langchain.event_response_subscriber import (
+	EventResponseSubscriber,
+	ensure_subscriber_running,
+	get_subscriber,
+	start_event_response_subscriber,
+	stop_event_response_subscriber,
+)
+
 __all__ = [
 	# Config
 	"get_langchain_service_url",
@@ -54,4 +63,10 @@ __all__ = [
 	"send_to_langchain_service",
 	# Messages
 	"build_event_message",
+	# Event response subscriber
+	"EventResponseSubscriber",
+	"get_subscriber",
+	"start_event_response_subscriber",
+	"stop_event_response_subscriber",
+	"ensure_subscriber_running",
 ]
