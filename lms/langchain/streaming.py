@@ -1,4 +1,4 @@
-"""Streaming support for AI Tutor responses via Redis Pub/Sub."""
+"""Streaming support for AI Tutor responses via Redis Streams."""
 
 from typing import Any, Dict, Optional
 
@@ -51,8 +51,11 @@ def subscribe_and_forward_to_socketio(
 	"""Subscribe to streaming response and forward chunks to Socket.IO.
 
 	This function is designed to be run as a background job via frappe.enqueue().
-	It subscribes to the Redis stream channel and forwards each chunk to the
+	It subscribes to the Redis Stream (using XREAD) and forwards each chunk to the
 	user's browser via Frappe's Socket.IO realtime system.
+
+	Uses Redis Streams instead of Pub/Sub to solve the race condition where
+	subscribers connecting after publishing starts would miss early messages.
 
 	Socket.IO events emitted:
 		- ai_tutor_stream_start: { request_id, timestamp }
@@ -133,6 +136,11 @@ def subscribe_and_forward_to_socketio(
 	handler.start(timeout=timeout)
 	complete_response = handler.wait_for_completion(timeout=timeout)
 	handler.stop()
+
+	# Clean up the Redis Stream after successful consumption
+	# This is optional - streams will auto-expire via TTL if not deleted
+	if complete_response is not None:
+		handler.cleanup_stream()
 
 	return complete_response
 
