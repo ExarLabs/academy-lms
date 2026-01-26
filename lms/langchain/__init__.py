@@ -2,12 +2,17 @@
 
 This module provides:
 - Event-driven integration with external LangChain service
-- AI Tutor chat functionality
+- AI Tutor chat functionality with streaming support
 - Document event handlers for LMS events
+- Repository pattern for data persistence
 """
 
 # Config
-from lms.langchain.config import get_ai_tutor_url, get_langchain_service_url
+from lms.langchain.config import (
+	get_ai_tutor_url,
+	get_langchain_service_url,
+	use_redis_mode,
+)
 
 # Message broker
 from lms.langchain.broker import LangchainMessageBroker, broker
@@ -32,7 +37,14 @@ from lms.langchain.service import send_to_langchain_service
 # Message utilities
 from lms.langchain.messages import build_event_message
 
-# Event response subscriber
+# Repositories
+from lms.langchain.repositories import (
+	get_response_by_request_id,
+	response_exists,
+	save_langchain_response,
+)
+
+# Event response subscriber (for document events)
 from lms.langchain.event_response_subscriber import (
 	EventResponseSubscriber,
 	ensure_subscriber_running,
@@ -41,10 +53,29 @@ from lms.langchain.event_response_subscriber import (
 	stop_event_response_subscriber,
 )
 
+# Tutor stream subscriber (for AI Tutor streaming responses)
+from lms.langchain.tutor_stream_subscriber import (
+	TutorStreamSubscriber,
+	create_tutor_stream_subscriber,
+	# Backward compatibility aliases
+	StreamingResponseHandler,
+	create_stream_handler,
+)
+
+# Exceptions
+from lms.langchain.exceptions import (
+	ConfigurationError,
+	LangchainError,
+	PersistenceError,
+	ServiceUnavailableError,
+	StreamingError,
+)
+
 __all__ = [
 	# Config
 	"get_langchain_service_url",
 	"get_ai_tutor_url",
+	"use_redis_mode",
 	# Broker
 	"LangchainMessageBroker",
 	"broker",
@@ -63,10 +94,26 @@ __all__ = [
 	"send_to_langchain_service",
 	# Messages
 	"build_event_message",
+	# Repositories
+	"save_langchain_response",
+	"response_exists",
+	"get_response_by_request_id",
 	# Event response subscriber
 	"EventResponseSubscriber",
 	"get_subscriber",
 	"start_event_response_subscriber",
 	"stop_event_response_subscriber",
 	"ensure_subscriber_running",
+	# Tutor stream subscriber
+	"TutorStreamSubscriber",
+	"create_tutor_stream_subscriber",
+	# Backward compatibility
+	"StreamingResponseHandler",
+	"create_stream_handler",
+	# Exceptions
+	"LangchainError",
+	"ServiceUnavailableError",
+	"StreamingError",
+	"PersistenceError",
+	"ConfigurationError",
 ]

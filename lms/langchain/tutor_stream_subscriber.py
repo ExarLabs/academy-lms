@@ -1,4 +1,4 @@
-"""Redis subscriber for receiving streaming responses from LangChain service.
+"""Tutor Stream Subscriber - Receives streaming AI Tutor responses via Redis Streams.
 
 Uses Redis Streams (XREAD) instead of Pub/Sub to solve the race condition where
 subscribers connecting after publishing starts would miss early messages.
@@ -14,7 +14,7 @@ import frappe
 from .redis_client import get_redis_client
 
 
-class StreamingResponseHandler:
+class TutorStreamSubscriber:
 	"""Subscribes to Redis Streams for streaming AI tutor responses.
 
 	Uses Redis Streams with XREAD to consume messages. Starts reading from
@@ -263,14 +263,14 @@ class StreamingResponseHandler:
 		return False
 
 
-def create_stream_handler(
+def create_tutor_stream_subscriber(
 	user_id: str,
 	request_id: str,
 	on_chunk: Optional[Callable[[str, int], None]] = None,
 	on_complete: Optional[Callable[[str, int], None]] = None,
 	on_error: Optional[Callable[[str, str], None]] = None,
-) -> StreamingResponseHandler:
-	"""Factory function to create a streaming response handler.
+) -> TutorStreamSubscriber:
+	"""Factory function to create a tutor stream subscriber.
 
 	Args:
 		user_id: The learner's user ID
@@ -280,12 +280,17 @@ def create_stream_handler(
 		on_error: Callback on error
 
 	Returns:
-		Configured StreamingResponseHandler instance
+		Configured TutorStreamSubscriber instance
 	"""
-	return StreamingResponseHandler(
+	return TutorStreamSubscriber(
 		user_id=user_id,
 		request_id=request_id,
 		on_chunk=on_chunk,
 		on_complete=on_complete,
 		on_error=on_error,
 	)
+
+
+# Backward compatibility alias
+create_stream_handler = create_tutor_stream_subscriber
+StreamingResponseHandler = TutorStreamSubscriber

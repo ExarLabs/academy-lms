@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 import frappe
 
 from .redis_publisher import get_publisher
-from .redis_subscriber import create_stream_handler
+from .tutor_stream_subscriber import create_tutor_stream_subscriber
 from .repositories import save_langchain_response
 
 
@@ -130,8 +130,8 @@ def subscribe_and_forward_to_socketio(
 		user=user_id,
 	)
 
-	# Create and start the stream handler
-	handler = create_stream_handler(
+	# Create and start the tutor stream subscriber
+	subscriber = create_tutor_stream_subscriber(
 		user_id=user_id,
 		request_id=request_id,
 		on_chunk=on_chunk,
@@ -139,13 +139,13 @@ def subscribe_and_forward_to_socketio(
 		on_error=on_error,
 	)
 
-	handler.start(timeout=timeout)
-	complete_response = handler.wait_for_completion(timeout=timeout)
-	handler.stop()
+	subscriber.start(timeout=timeout)
+	complete_response = subscriber.wait_for_completion(timeout=timeout)
+	subscriber.stop()
 
 	# Clean up the Redis Stream after successful consumption
 	# This is optional - streams will auto-expire via TTL if not deleted
 	if complete_response is not None:
-		handler.cleanup_stream()
+		subscriber.cleanup_stream()
 
 	return complete_response
