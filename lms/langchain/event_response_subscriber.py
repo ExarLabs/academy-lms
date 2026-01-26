@@ -11,7 +11,9 @@ from typing import Any, Callable, Dict, Optional
 
 import frappe
 
+from .config import use_redis_mode
 from .redis_client import get_redis_client, get_redis_url
+from .repositories import save_langchain_response
 
 
 class EventResponseSubscriber:
@@ -43,7 +45,9 @@ class EventResponseSubscriber:
 	def start(self) -> None:
 		"""Start the subscriber in a background daemon thread."""
 		if self.is_running:
-			print("[EventResponseSubscriber] Already running, skipping start")
+			frappe.logger("langchain").debug(
+				"EventResponseSubscriber already running, skipping start"
+			)
 			return
 
 		# Capture site name in main thread where frappe.local is initialized
@@ -55,7 +59,9 @@ class EventResponseSubscriber:
 			name="EventResponseSubscriber",
 		)
 		self._thread.start()
-		print(f"[EventResponseSubscriber] Started, listening on {self.CHANNEL_PATTERN}")
+		frappe.logger("langchain").info(
+			f"EventResponseSubscriber started, listening on {self.CHANNEL_PATTERN}"
+		)
 
 	def stop(self) -> None:
 		"""Stop the subscriber gracefully."""
@@ -81,7 +87,10 @@ class EventResponseSubscriber:
 				frappe.connect()
 				self._subscribe_and_listen()
 			except Exception as e:
-				print(f"Subscriber error, reconnecting in {self.RECONNECT_DELAY}s: {e}")
+				frappe.logger("langchain").error(
+					f"Subscriber error, reconnecting in {self.RECONNECT_DELAY}s: {e}",
+					exc_info=True
+				)
 				if self._running:
 					time.sleep(self.RECONNECT_DELAY)
 			finally:
@@ -93,7 +102,9 @@ class EventResponseSubscriber:
 		self._pubsub = client.pubsub()
 		self._pubsub.psubscribe(self.CHANNEL_PATTERN)
 
-		print(f"[EventResponseSubscriber] Subscribed to pattern: {self.CHANNEL_PATTERN}")
+		frappe.logger("langchain").info(
+			f"EventResponseSubscriber subscribed to pattern: {self.CHANNEL_PATTERN}"
+		)
 
 		for message in self._pubsub.listen():
 			if not self._running:
@@ -103,14 +114,18 @@ class EventResponseSubscriber:
 				try:
 					channel = message["channel"]
 					data = json.loads(message["data"])
-					print(f"[EventResponseSubscriber] Received message on {channel}: {data}")
+					frappe.logger("langchain").debug(
+						f"Received message on {channel}"
+					)
 					self._handle_response(channel, data)
 				except json.JSONDecodeError as e:
-					print(f"[EventResponseSubscriber] Invalid JSON in message: {e}")
+					frappe.logger("langchain").warning(
+						f"Invalid JSON in message: {e}"
+					)
 				except Exception as e:
-					print(f"[EventResponseSubscriber] Error handling response: {e}")
-					import traceback
-					traceback.print_exc()
+					frappe.logger("langchain").error(
+						f"Error handling response: {e}", exc_info=True
+					)
 
 	def _handle_response(self, channel: str, data: Dict[str, Any]) -> None:
 		"""Handle a response from LangChain and forward to Socket.IO.
@@ -123,15 +138,27 @@ class EventResponseSubscriber:
 		content = data.get("content")
 
 		if not user_id or not content:
-			print(f"Skipping response without user_id or content: {data}")
+			frappe.logger("langchain").debug(
+				f"Skipping response without user_id or content"
+			)
 			return
 
 		event_type = data.get("event_type", "unknown")
 
-		print(f"Forwarding {event_type} response to user {user_id}")
+		frappe.logger("langchain").debug(
+			f"Forwarding {event_type} response to user {user_id}"
+		)
 
 		# Save to Langchain Responses doctype for audit (optional)
-		self._save_response(data)
+		save_langchain_response(
+			user_id=user_id,
+			content=content,
+			response_mode="event",
+			event_type=event_type,
+			course=data.get("course"),
+			lesson=data.get("lesson"),
+			timestamp=data.get("timestamp"),
+		)
 
 		# Forward to frontend via Socket.IO - ONLY to the specific user
 		# Use after_commit=False since we're in a background thread without request context
@@ -146,28 +173,6 @@ class EventResponseSubscriber:
 			user=user_id,
 			after_commit=False,
 		)
-
-	def _save_response(self, data: Dict[str, Any]) -> None:
-		"""Save the response to Langchain Responses doctype for audit.
-
-		This is optional and fails silently if the doctype doesn't exist.
-		"""
-		try:
-			if frappe.db.exists("DocType", "Langchain Responses"):
-				doc = frappe.new_doc("Langchain Responses")
-				doc.user = data.get("user_id")
-				doc.event_type = data.get("event_type")
-				doc.content = data.get("content")
-				doc.course = data.get("course")
-				doc.lesson = data.get("lesson")
-				doc.timestamp = data.get("timestamp")
-				doc.insert(ignore_permissions=True)
-				frappe.db.commit()
-		except Exception as e:
-			# Non-critical - log and continue
-			frappe.logger("langchain").debug(
-				f"Could not save response to doctype: {e}"
-			)
 
 
 # Singleton instance
@@ -197,7 +202,7 @@ def start_event_response_subscriber() -> None:
 	Call this to start listening for LangChain event responses.
 	Safe to call multiple times - will not start duplicate subscribers.
 	"""
-	if not _use_redis():
+	if not use_redis_mode():
 		frappe.logger("langchain").debug(
 			"Redis mode disabled, not starting event response subscriber"
 		)
@@ -220,15 +225,12 @@ def ensure_subscriber_running() -> None:
 	This function is designed to be called by Frappe's scheduler
 	to periodically check and restart the subscriber if it crashed.
 	"""
-	if not _use_redis():
+	if not use_redis_mode():
 		return
 
 	subscriber = get_subscriber()
 	if not subscriber.is_running:
-		print("[EventResponseSubscriber] Not running, starting via scheduler...")
+		frappe.logger("langchain").info(
+			"EventResponseSubscriber not running, starting via scheduler..."
+		)
 		subscriber.start()
-
-
-def _use_redis() -> bool:
-	"""Check if Redis mode is enabled for LangChain communication."""
-	return frappe.conf.get("langchain_use_redis", False)

@@ -6,6 +6,7 @@ import frappe
 
 from .redis_publisher import get_publisher
 from .redis_subscriber import create_stream_handler
+from .repositories import save_langchain_response
 
 
 def request_streaming_response(
@@ -99,8 +100,13 @@ def subscribe_and_forward_to_socketio(
 			user=user_id,
 		)
 
-		# Save the complete response to database
-		_save_response(user_id, request_id, response)
+		# Save the complete response to database using repository
+		save_langchain_response(
+			user_id=user_id,
+			content=response,
+			response_mode="streaming",
+			request_id=request_id,
+		)
 
 	def on_error(error_type: str, message: str) -> None:
 		"""Forward error to browser via Socket.IO."""
@@ -143,35 +149,3 @@ def subscribe_and_forward_to_socketio(
 		handler.cleanup_stream()
 
 	return complete_response
-
-
-def _save_response(user_id: str, request_id: str, response: str) -> None:
-	"""Save the complete AI tutor response to database.
-
-	Creates a 'Langchain Responses' document if the doctype exists.
-	"""
-	try:
-		if not frappe.db.exists("DocType", "Langchain Responses"):
-			frappe.logger("langchain").debug(
-				"Langchain Responses doctype not found, skipping save"
-			)
-			return
-
-		doc = frappe.get_doc({
-			"doctype": "Langchain Responses",
-			"user": user_id,
-			"request_id": request_id,
-			"response": response,
-			"response_mode": "streaming",
-		})
-		doc.insert(ignore_permissions=True)
-		frappe.db.commit()
-
-		frappe.logger("langchain").debug(
-			f"Saved streaming response: request={request_id}"
-		)
-
-	except Exception as e:
-		frappe.logger("langchain").error(
-			f"Failed to save streaming response: {e}", exc_info=True
-		)

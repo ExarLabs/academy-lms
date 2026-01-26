@@ -2,6 +2,8 @@
 
 import frappe
 
+from lms.langchain.repositories import save_langchain_response
+
 
 @frappe.whitelist(allow_guest=False)
 def send_frontend_event(event_type, **kwargs):
@@ -40,18 +42,15 @@ def post_langchain_response(request_id, user, content, course=None, lesson=None)
 		lesson: Optional lesson reference
 	"""
 	try:
-		doc = frappe.get_doc(
-			{
-				"doctype": "Langchain Responses",
-				"user": user,
-				"course": course,
-				"lesson": lesson,
-				"content": content,
-				"request_id": request_id,
-			}
+		# Save using repository
+		doc_name = save_langchain_response(
+			user_id=user,
+			content=content,
+			response_mode="sync",
+			request_id=request_id,
+			course=course,
+			lesson=lesson,
 		)
-		doc.insert(ignore_permissions=True)
-		frappe.db.commit()
 
 		frappe.publish_realtime(
 			event="langchain_response_received",
@@ -65,7 +64,9 @@ def post_langchain_response(request_id, user, content, course=None, lesson=None)
 			after_commit=True,
 		)
 
-		frappe.logger().info(f"LangChain response received and stored: {request_id}")
+		frappe.logger("langchain").info(
+			f"LangChain response received and stored: {request_id} doc={doc_name}"
+		)
 		return {"status": "success", "request_id": request_id}
 
 	except Exception as e:

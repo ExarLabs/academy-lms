@@ -41,7 +41,7 @@ def send_to_langchain_service(**kwargs):
 			timeout=30,
 		)
 		response.raise_for_status()
-		frappe.logger().info(f"LangChain request sent successfully: {request_id}")
+		frappe.logger("langchain").info(f"LangChain request sent successfully: {request_id}")
 
 		response_data = response.json()
 		content = response_data.get("response", "")

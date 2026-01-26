@@ -3,16 +3,7 @@
 import frappe
 import requests
 
-from lms.langchain.config import get_ai_tutor_url
-
-
-def _use_streaming() -> bool:
-	"""Check if streaming mode is enabled for AI Tutor responses.
-
-	Returns:
-		True if streaming should be used, False for synchronous HTTP.
-	"""
-	return frappe.conf.get("langchain_use_redis", False)
+from lms.langchain.config import get_ai_tutor_url, use_redis_mode
 
 
 @frappe.whitelist(allow_guest=False)
@@ -41,7 +32,7 @@ def ask_tutor(message, current_lesson, course_name, user_id=None):
 
 	module_id = f"{course_name}:{current_lesson}" if course_name else current_lesson or "default"
 
-	if _use_streaming():
+	if use_redis_mode():
 		return _ask_tutor_streaming(
 			user_id=user_id,
 			message=message,

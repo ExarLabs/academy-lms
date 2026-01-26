@@ -90,10 +90,13 @@ A modular integration with external LangChain service for AI features:
 ```
 lms/langchain/
 ├── __init__.py                    # Package exports
-├── config.py                      # URL helpers (get_langchain_service_url, get_ai_tutor_url)
+├── config.py                      # Configuration helpers (use_redis_mode, get_langchain_service_url, get_ai_tutor_url)
 ├── broker.py                      # LangchainMessageBroker class for event dispatch
 ├── lms_event_handlers.py          # 6 document event handlers
 ├── event_response_subscriber.py   # Redis pub/sub subscriber for LangChain responses
+├── redis_subscriber.py            # StreamingResponseHandler for Redis Streams
+├── streaming.py                   # Streaming response orchestration (subscribe_and_forward_to_socketio)
+├── repositories.py                # Data persistence layer (save_langchain_response, response_exists)
 ├── service.py                     # HTTP client for LangChain API
 ├── messages.py                    # Event message builder
 ├── api.py                         # API endpoints (post_langchain_response, send_frontend_event)

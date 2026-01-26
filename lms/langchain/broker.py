@@ -2,16 +2,8 @@
 
 import frappe
 
+from lms.langchain.config import use_redis_mode
 from lms.langchain.service import send_to_langchain_service
-
-
-def _use_redis() -> bool:
-	"""Check if Redis mode is enabled for LangChain communication.
-
-	Returns:
-		True if Redis pub/sub should be used, False for HTTP fallback.
-	"""
-	return frappe.conf.get("langchain_use_redis", False)
 
 
 class LangchainMessageBroker:
@@ -30,7 +22,7 @@ class LangchainMessageBroker:
 
 	def send(self, event_type, **kwargs):
 		"""Send event to LangChain service via configured mode."""
-		if _use_redis():
+		if use_redis_mode():
 			self._send_via_redis(event_type, **kwargs)
 		else:
 			self._send_via_http(event_type, **kwargs)
