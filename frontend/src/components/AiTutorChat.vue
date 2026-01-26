@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, inject } from 'vue'
 import { Button, call } from 'frappe-ui'
 import { Sparkles, Send } from 'lucide-vue-next'
 
@@ -89,6 +89,7 @@ const props = defineProps({
 	},
 })
 
+const socket = inject('$socket')
 const messages = ref([])
 const inputMessage = ref('')
 const isLoading = ref(false)
@@ -143,26 +144,17 @@ watch(messages, (newMessages) => {
 
 // Socket.IO event handlers
 const setupSocketListeners = () => {
-	if (typeof frappe === 'undefined' || !frappe.realtime) {
-		console.warn('Frappe realtime not available')
-		return
-	}
-
-	frappe.realtime.on('ai_tutor_stream_start', handleStreamStart)
-	frappe.realtime.on('ai_tutor_stream_chunk', handleStreamChunk)
-	frappe.realtime.on('ai_tutor_stream_end', handleStreamEnd)
-	frappe.realtime.on('ai_tutor_stream_error', handleStreamError)
+	socket.on('ai_tutor_stream_start', handleStreamStart)
+	socket.on('ai_tutor_stream_chunk', handleStreamChunk)
+	socket.on('ai_tutor_stream_end', handleStreamEnd)
+	socket.on('ai_tutor_stream_error', handleStreamError)
 }
 
 const cleanupSocketListeners = () => {
-	if (typeof frappe === 'undefined' || !frappe.realtime) {
-		return
-	}
-
-	frappe.realtime.off('ai_tutor_stream_start', handleStreamStart)
-	frappe.realtime.off('ai_tutor_stream_chunk', handleStreamChunk)
-	frappe.realtime.off('ai_tutor_stream_end', handleStreamEnd)
-	frappe.realtime.off('ai_tutor_stream_error', handleStreamError)
+	socket.off('ai_tutor_stream_start', handleStreamStart)
+	socket.off('ai_tutor_stream_chunk', handleStreamChunk)
+	socket.off('ai_tutor_stream_end', handleStreamEnd)
+	socket.off('ai_tutor_stream_error', handleStreamError)
 }
 
 const handleStreamStart = (data) => {
@@ -255,6 +247,7 @@ const sendMessage = async () => {
 			course_name: props.courseName,
 		})
 
+		console.log('response.mode: ', response.mode);
 		if (response?.mode === 'streaming') {
 			// Streaming mode - wait for Socket.IO events
 			currentRequestId.value = response.request_id

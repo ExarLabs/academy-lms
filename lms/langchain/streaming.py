@@ -72,7 +72,7 @@ def subscribe_and_forward_to_socketio(
 		The complete response text or None if error/timeout
 	"""
 	frappe.logger("langchain").info(
-		f"Starting Socket.IO forwarding: user={user_id} request={request_id}"
+		f"[SOCKETIO_FORWARD] Starting: user={user_id} request={request_id} timeout={timeout}"
 	)
 
 	def on_chunk(chunk: str, index: int) -> None:

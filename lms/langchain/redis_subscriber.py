@@ -70,14 +70,17 @@ class StreamingResponseHandler:
 		"""
 		self._running = True
 
-		frappe.logger("langchain").info(
-			f"Starting stream listener: key={self._stream_key}"
-		)
+		# Capture context from main thread (frappe.local not available in spawned threads)
+		# Thread needs: site_name (for frappe.init), redis_url (for Redis connection)
+		from .redis_client import get_redis_url
+		redis_url = get_redis_url()
+		site_name = frappe.local.site
+		print(f"[SUBSCRIBER] Starting stream listener: key={self._stream_key} redis_url={redis_url}", flush=True)
 
-		# Start listener thread
+		# Start listener thread, passing context needed for Frappe initialization
 		self._thread = threading.Thread(
 			target=self._listen_loop,
-			kwargs={"timeout": timeout},
+			kwargs={"timeout": timeout, "redis_url": redis_url, "site_name": site_name},
 			daemon=True,
 		)
 		self._thread.start()
@@ -126,16 +129,31 @@ class StreamingResponseHandler:
 			)
 			return False
 
-	def _listen_loop(self, timeout: float) -> None:
-		"""Main listening loop using XREAD (runs in background thread)."""
+	def _listen_loop(self, timeout: float, redis_url: str, site_name: str) -> None:
+		"""Main listening loop using XREAD (runs in background thread).
+
+		Args:
+			timeout: Maximum time to wait for stream completion (seconds)
+			redis_url: Redis URL (passed from main thread since frappe.conf is not bound in threads)
+			site_name: Frappe site name (for initializing Frappe context in thread)
+		"""
 		import time
 
-		client = get_redis_client()
-		start_time = time.time()
-		block_ms = 1000  # Block for 1 second per XREAD call
-
 		try:
+			# Initialize Frappe context for this thread
+			# Required for: frappe.publish_realtime(), frappe.db, frappe.logger()
+			frappe.init(site=site_name)
+			frappe.connect()
+
+			# Create a dedicated Redis connection for this thread
+			import redis
+			client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+			start_time = time.time()
+			block_ms = 1000  # Block for 1 second per XREAD call
+			poll_count = 0
+
 			while self._running and (time.time() - start_time) < timeout:
+				poll_count += 1
 				# XREAD from last position, blocking for efficient polling
 				# Using last_id ensures we don't re-process messages
 				result = client.xread(
@@ -146,6 +164,8 @@ class StreamingResponseHandler:
 
 				if not result:
 					# No new messages, continue polling
+					if poll_count % 10 == 0:  # Log every 10 polls (~10 seconds)
+						print(f"Stream listener polling: key={self._stream_key} polls={poll_count} elapsed={time.time() - start_time:.1f}s", flush=True)
 					continue
 
 				# Process all entries from the stream
@@ -159,14 +179,24 @@ class StreamingResponseHandler:
 							return
 
 		except Exception as e:
-			frappe.logger("langchain").error(
-				f"Stream listener error: {e}", exc_info=True
-			)
+			print(f"Stream listener error: {e}", flush=True)
+			import traceback
 			if self.on_error:
 				self.on_error("listener_error", str(e))
 
 		finally:
 			self._running = False
+			# Close the thread-local Redis connection
+			try:
+				if 'client' in locals() and client:
+					client.close()
+			except Exception:
+				pass
+			# Clean up Frappe context for this thread
+			try:
+				frappe.destroy()
+			except Exception:
+				pass
 
 	def _handle_message(self, fields: Dict[str, Any]) -> bool:
 		"""Handle an incoming stream message.
@@ -180,9 +210,7 @@ class StreamingResponseHandler:
 		msg_type = fields.get("type")
 
 		if msg_type == "stream_start":
-			frappe.logger("langchain").debug(
-				f"Stream started: request={self.request_id}"
-			)
+			print(f"Stream started: request={self.request_id}")
 			return False
 
 		elif msg_type == "stream_chunk":
@@ -202,9 +230,7 @@ class StreamingResponseHandler:
 				"complete_response", "".join(self._chunks)
 			)
 
-			frappe.logger("langchain").info(
-				f"Stream completed: request={self.request_id} chunks={total_chunks}"
-			)
+			print(f"Stream completed: request={self.request_id} chunks={total_chunks}")
 
 			if self.on_complete:
 				self.on_complete(self._complete_response, total_chunks)
@@ -215,9 +241,7 @@ class StreamingResponseHandler:
 			error_type = fields.get("error_type", "unknown")
 			error_message = fields.get("message", "Unknown error")
 
-			frappe.logger("langchain").error(
-				f"Stream error: request={self.request_id} type={error_type} msg={error_message}"
-			)
+			print(f"Stream error: request={self.request_id} type={error_type} msg={error_message}")
 
 			if self.on_error:
 				self.on_error(error_type, error_message)
