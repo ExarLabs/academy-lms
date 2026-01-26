@@ -71,6 +71,9 @@ from lms.langchain.exceptions import (
 	StreamingError,
 )
 
+# Adapters
+from lms.langchain.adapters import SocketIOStreamAdapter
+
 __all__ = [
 	# Config
 	"get_langchain_service_url",
@@ -116,4 +119,6 @@ __all__ = [
 	"StreamingError",
 	"PersistenceError",
 	"ConfigurationError",
+	# Adapters
+	"SocketIOStreamAdapter",
 ]

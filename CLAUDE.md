@@ -101,7 +101,9 @@ lms/langchain/
 ├── messages.py                    # Event message builder
 ├── api.py                         # API endpoints (post_langchain_response, send_frontend_event)
 ├── exceptions.py                  # Custom exception hierarchy (LangchainError, StreamingError, etc.)
-└── tutor.py                       # ask_tutor() AI chat endpoint
+├── tutor.py                       # ask_tutor() AI chat endpoint
+└── adapters/                      # Output channel adapters
+    └── socketio.py                # SocketIOStreamAdapter - bridges streaming to Socket.IO
 ```
 
 **AI Tutor:**

@@ -1,12 +1,21 @@
-"""Streaming support for AI Tutor responses via Redis Streams."""
+"""Streaming support for AI Tutor responses via Redis Streams.
+
+This module provides orchestration for streaming AI Tutor responses:
+- Publishing tutor requests to Redis
+- Subscribing to response streams
+- Forwarding chunks to the browser via Socket.IO
+
+The actual Socket.IO communication is handled by the SocketIOStreamAdapter,
+keeping this module focused on orchestration logic.
+"""
 
 from typing import Any, Dict, Optional
 
 import frappe
 
+from .adapters.socketio import SocketIOStreamAdapter
 from .redis_publisher import get_publisher
 from .tutor_stream_subscriber import create_tutor_stream_subscriber
-from .repositories import save_langchain_response
 
 
 def request_streaming_response(
@@ -58,7 +67,7 @@ def subscribe_and_forward_to_socketio(
 	Uses Redis Streams instead of Pub/Sub to solve the race condition where
 	subscribers connecting after publishing starts would miss early messages.
 
-	Socket.IO events emitted:
+	Socket.IO events emitted (via SocketIOStreamAdapter):
 		- ai_tutor_stream_start: { request_id, timestamp }
 		- ai_tutor_stream_chunk: { request_id, chunk, index }
 		- ai_tutor_stream_end: { request_id, complete_response, total_chunks }
@@ -73,70 +82,24 @@ def subscribe_and_forward_to_socketio(
 		The complete response text or None if error/timeout
 	"""
 	frappe.logger("langchain").info(
-		f"[SOCKETIO_FORWARD] Starting: user={user_id} request={request_id} timeout={timeout}"
+		f"[STREAMING] Starting: user={user_id} request={request_id} timeout={timeout}"
 	)
 
-	def on_chunk(chunk: str, index: int) -> None:
-		"""Forward chunk to browser via Socket.IO."""
-		frappe.publish_realtime(
-			"ai_tutor_stream_chunk",
-			{
-				"request_id": request_id,
-				"chunk": chunk,
-				"index": index,
-			},
-			user=user_id,
-		)
-
-	def on_complete(response: str, total_chunks: int) -> None:
-		"""Forward completion to browser via Socket.IO and save response."""
-		frappe.publish_realtime(
-			"ai_tutor_stream_end",
-			{
-				"request_id": request_id,
-				"complete_response": response,
-				"total_chunks": total_chunks,
-			},
-			user=user_id,
-		)
-
-		# Save the complete response to database using repository
-		save_langchain_response(
-			user_id=user_id,
-			content=response,
-			response_mode="streaming",
-			request_id=request_id,
-		)
-
-	def on_error(error_type: str, message: str) -> None:
-		"""Forward error to browser via Socket.IO."""
-		frappe.publish_realtime(
-			"ai_tutor_stream_error",
-			{
-				"request_id": request_id,
-				"error_type": error_type,
-				"message": message,
-			},
-			user=user_id,
-		)
-
-	# Publish stream start event
-	frappe.publish_realtime(
-		"ai_tutor_stream_start",
-		{
-			"request_id": request_id,
-			"timestamp": frappe.utils.now(),
-		},
-		user=user_id,
+	# Create adapter for Socket.IO communication
+	adapter = SocketIOStreamAdapter(
+		user_id=user_id,
+		request_id=request_id,
+		persist_response=True,
 	)
 
-	# Create and start the tutor stream subscriber
+	# Emit stream start event
+	adapter.emit_stream_start()
+
+	# Create and start the tutor stream subscriber with adapter callbacks
 	subscriber = create_tutor_stream_subscriber(
 		user_id=user_id,
 		request_id=request_id,
-		on_chunk=on_chunk,
-		on_complete=on_complete,
-		on_error=on_error,
+		**adapter.get_callbacks(),
 	)
 
 	subscriber.start(timeout=timeout)
@@ -144,8 +107,15 @@ def subscribe_and_forward_to_socketio(
 	subscriber.stop()
 
 	# Clean up the Redis Stream after successful consumption
-	# This is optional - streams will auto-expire via TTL if not deleted
 	if complete_response is not None:
 		subscriber.cleanup_stream()
+		frappe.logger("langchain").info(
+			f"[STREAMING] Completed: request={request_id} "
+			f"response_length={len(complete_response)}"
+		)
+	else:
+		frappe.logger("langchain").warning(
+			f"[STREAMING] No response received: request={request_id}"
+		)
 
 	return complete_response
