@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AdminBatchDashboard: typeof import('./src/components/AdminBatchDashboard.vue')['default']
+    AiTutorChat: typeof import('./src/components/AiTutorChat.vue')['default']
     Annoucements: typeof import('./src/components/Annoucements.vue')['default']
     AnnouncementModal: typeof import('./src/components/Modals/AnnouncementModal.vue')['default']
     Apps: typeof import('./src/components/Sidebar/Apps.vue')['default']

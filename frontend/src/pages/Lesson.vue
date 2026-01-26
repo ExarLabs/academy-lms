@@ -261,6 +261,13 @@
 								:quizId="lesson.data.quiz_id"
 							/>
 						</div>
+						<!-- AI Tutor Section -->
+						<div v-if="user && lesson.data.membership" class="mt-12">
+							<AiTutorChat
+								:courseName="courseName"
+								:lessonName="lesson.data.name"
+							/>
+						</div>
 					</div>
 					<div
 						v-if="lesson.data"
@@ -378,6 +385,7 @@ import CourseOutline from '@/components/CourseOutline.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import Notes from '@/components/Notes/Notes.vue'
 import InlineLessonMenu from '@/components/Notes/InlineLessonMenu.vue'
+import AiTutorChat from '@/components/AiTutorChat.vue'
 
 const user = inject('$user')
 const socket = inject('$socket')

@@ -209,7 +209,7 @@ bench --site academy.local install-app lms
 **Purpose**: Installs the LMS application on the specified site.
 
 
-## 9. Database Restoration
+## 9. (Optional) Database Restoration
 
 ```bash
 # Restore database from backup file
@@ -261,14 +261,7 @@ bench --site academy.local list-backups
 bench --site academy.local restore [backup-file]
 ```
 
-## 11. Install AI Tutor Chat App
-- Download the app:
-    - `bench get-app ai_tutor_chat git@github.com/ExarLabs/academy-ai-tutor-chat` or `bench get-app ai_tutor_chat https://github.com/ExarLabs/academy-ai-tutor-chat`, then:
-- Install the app:
-    - `bench --site academy.local install-app ai_tutor_chat`
-
 ### Description
 This Frappe application contains the backend implementation of the AI Tutor Chat.
 It defines the endpoints that are called by the AI Tutor Chat Vue component integrated into the LMS app.
 This application will act as a proxy between the LMS app and the LangChain service.
-
