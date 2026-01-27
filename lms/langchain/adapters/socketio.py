@@ -5,8 +5,6 @@ and Frappe's Socket.IO realtime system, enabling real-time updates
 to the user's browser.
 """
 
-from collections.abc import Callable
-
 import frappe
 
 from ..repositories import save_langchain_response

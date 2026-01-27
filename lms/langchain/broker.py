@@ -4,8 +4,6 @@ Uses the Strategy pattern to support pluggable transport mechanisms.
 Transport selection is based on configuration and availability.
 """
 
-from typing import Optional
-
 import frappe
 
 from lms.langchain.config import use_redis_mode
