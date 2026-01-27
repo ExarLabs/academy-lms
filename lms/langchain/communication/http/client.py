@@ -66,28 +66,34 @@ def send_to_langchain_service(**kwargs):
 	Args:
 		**kwargs: Event data including:
 			- event_type: Type of event (required)
-			- user: User ID to notify (required)
+			- user_id: User ID to notify (required)
 			- course: Course name (optional)
 			- lesson: Lesson name (optional)
 			- Additional event-specific fields
 	"""
 	request_id = str(uuid.uuid4())
 	event_type = kwargs.get("event_type", "unknown")
-	user = kwargs.get("user")
+	user_id = kwargs.get("user_id") or kwargs.get("user")
 	course = kwargs.get("course")
 	lesson = kwargs.get("lesson")
 
 	message = build_event_message(event_type, kwargs)
 
+	# Build context with remaining event-specific fields
 	context = {
 		"request_id": request_id,
-		"event_type": event_type,
-		"course": course,
-		**{k: v for k, v in kwargs.items() if k not in ("user", "event_type", "course", "lesson")},
+		"course_id": course,
+		**{
+			k: v
+			for k, v in kwargs.items()
+			if k not in ("user_id", "user", "event_type", "course", "lesson")
+		},
 	}
 
+	# Payload structure expected by LangChain service
 	payload = {
-		"user_id": user,
+		"event_type": event_type,
+		"user_id": user_id,
 		"message": message,
 		"current_lesson": lesson,
 		"context": context,
@@ -106,7 +112,7 @@ def send_to_langchain_service(**kwargs):
 
 		post_langchain_response(
 			request_id=request_id,
-			user=user,
+			user=user_id,
 			content=content,
 			course=course,
 			lesson=lesson,
