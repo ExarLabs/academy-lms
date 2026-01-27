@@ -5,7 +5,7 @@ and Frappe's Socket.IO realtime system, enabling real-time updates
 to the user's browser.
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import frappe
 

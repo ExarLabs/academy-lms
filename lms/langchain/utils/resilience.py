@@ -6,7 +6,7 @@ through retry logic with exponential backoff.
 
 import functools
 import time
-from typing import Callable, Tuple, Type, Union
+from collections.abc import Callable
 
 import frappe
 
@@ -15,7 +15,7 @@ def retry_on_exception(
 	max_attempts: int = 3,
 	delay: float = 1.0,
 	backoff: float = 2.0,
-	exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]] = Exception,
+	exceptions: type[Exception] | tuple[type[Exception], ...] = Exception,
 	on_retry: Callable[[Exception, int], None] = None,
 ) -> Callable:
 	"""Decorator that retries a function on specified exceptions.

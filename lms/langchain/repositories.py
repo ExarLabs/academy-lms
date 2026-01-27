@@ -4,7 +4,7 @@ Provides a unified interface for saving and retrieving LangChain responses,
 eliminating duplicate persistence logic across the module.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import frappe
 
@@ -13,12 +13,12 @@ def save_langchain_response(
 	user_id: str,
 	content: str,
 	response_mode: str = "sync",
-	request_id: Optional[str] = None,
-	event_type: Optional[str] = None,
-	course: Optional[str] = None,
-	lesson: Optional[str] = None,
-	timestamp: Optional[str] = None,
-) -> Optional[str]:
+	request_id: str | None = None,
+	event_type: str | None = None,
+	course: str | None = None,
+	lesson: str | None = None,
+	timestamp: str | None = None,
+) -> str | None:
 	"""Save a LangChain response to the database.
 
 	Unified persistence method for all LangChain response types:
@@ -103,7 +103,7 @@ def response_exists(request_id: str) -> bool:
 	return frappe.db.exists("Langchain Responses", {"request_id": request_id})
 
 
-def get_response_by_request_id(request_id: str) -> Optional[Dict[str, Any]]:
+def get_response_by_request_id(request_id: str) -> dict[str, Any] | None:
 	"""Retrieve a response by its request_id.
 
 	Args:

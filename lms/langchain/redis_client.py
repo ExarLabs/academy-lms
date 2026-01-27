@@ -5,13 +5,12 @@ Both services MUST connect to the same Redis for pub/sub to work.
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import frappe
 import redis
 
-
-_redis_client: Optional[redis.Redis] = None
+_redis_client: redis.Redis | None = None
 
 
 def get_redis_url() -> str:
@@ -60,7 +59,7 @@ def get_redis_client() -> redis.Redis:
 	return _redis_client
 
 
-def publish_message(channel: str, message: Dict[str, Any]) -> int:
+def publish_message(channel: str, message: dict[str, Any]) -> int:
 	"""Publish a message to a Redis channel.
 
 	Args:

@@ -10,40 +10,18 @@ This module provides:
 """
 
 # Config
+# Adapters
+from lms.langchain.adapters import SocketIOStreamAdapter
+
+# API endpoints
+from lms.langchain.api import post_langchain_response, send_frontend_event
+
+# Message broker
+from lms.langchain.broker import LangchainMessageBroker, broker
 from lms.langchain.config import (
 	get_ai_tutor_url,
 	get_langchain_service_url,
 	use_redis_mode,
-)
-
-# Message broker
-from lms.langchain.broker import LangchainMessageBroker, broker
-
-# Event handlers
-from lms.langchain.lms_event_handlers import (
-	handle_assignment_status_update,
-	handle_assignment_submission,
-	handle_certificate_issued,
-	handle_course_progress_update,
-	handle_enrollment,
-	handle_quiz_submission,
-)
-
-# API endpoints
-from lms.langchain.api import post_langchain_response, send_frontend_event
-from lms.langchain.tutor import ask_tutor
-
-# Service functions
-from lms.langchain.service import send_to_langchain_service
-
-# Message utilities
-from lms.langchain.messages import build_event_message
-
-# Repositories
-from lms.langchain.repositories import (
-	get_response_by_request_id,
-	response_exists,
-	save_langchain_response,
 )
 
 # Event response subscriber (for document events)
@@ -55,15 +33,6 @@ from lms.langchain.event_response_subscriber import (
 	stop_event_response_subscriber,
 )
 
-# Tutor stream subscriber (for AI Tutor streaming responses)
-from lms.langchain.tutor_stream_subscriber import (
-	TutorStreamSubscriber,
-	create_tutor_stream_subscriber,
-	# Backward compatibility aliases
-	StreamingResponseHandler,
-	create_stream_handler,
-)
-
 # Exceptions
 from lms.langchain.exceptions import (
 	ConfigurationError,
@@ -73,14 +42,44 @@ from lms.langchain.exceptions import (
 	StreamingError,
 )
 
-# Adapters
-from lms.langchain.adapters import SocketIOStreamAdapter
+# Event handlers
+from lms.langchain.lms_event_handlers import (
+	handle_assignment_status_update,
+	handle_assignment_submission,
+	handle_certificate_issued,
+	handle_course_progress_update,
+	handle_enrollment,
+	handle_quiz_submission,
+)
+
+# Message utilities
+from lms.langchain.messages import build_event_message
+
+# Repositories
+from lms.langchain.repositories import (
+	get_response_by_request_id,
+	response_exists,
+	save_langchain_response,
+)
+
+# Service functions
+from lms.langchain.service import send_to_langchain_service
 
 # Transports (Strategy pattern)
 from lms.langchain.transports import (
 	EventTransport,
 	HttpEventTransport,
 	RedisEventTransport,
+)
+from lms.langchain.tutor import ask_tutor
+
+# Tutor stream subscriber (for AI Tutor streaming responses)
+from lms.langchain.tutor_stream_subscriber import (
+	# Backward compatibility aliases
+	StreamingResponseHandler,
+	TutorStreamSubscriber,
+	create_stream_handler,
+	create_tutor_stream_subscriber,
 )
 
 # Utilities

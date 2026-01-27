@@ -1,9 +1,9 @@
 """Redis event publisher for LangChain integration."""
 
 import json
-from datetime import datetime
-from typing import Any, Dict, Optional
 import uuid
+from datetime import datetime
+from typing import Any, Optional
 
 import frappe
 
@@ -52,8 +52,8 @@ class RedisEventPublisher:
 		user_id: str,
 		message: str,
 		module_id: str,
-		request_id: Optional[str] = None,
-		context: Optional[Dict[str, Any]] = None,
+		request_id: str | None = None,
+		context: dict[str, Any] | None = None,
 	) -> str:
 		"""Publish a tutor chat request to Redis.
 
@@ -91,7 +91,7 @@ class RedisEventPublisher:
 
 
 # Singleton instance
-_publisher: Optional[RedisEventPublisher] = None
+_publisher: RedisEventPublisher | None = None
 
 
 def get_publisher() -> RedisEventPublisher:

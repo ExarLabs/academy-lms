@@ -5,7 +5,7 @@ by the LangChain service. Faster than HTTP and doesn't require
 direct network connectivity between services.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import frappe
 
@@ -88,7 +88,7 @@ class RedisEventTransport(EventTransport):
 		except Exception:
 			return False
 
-	def get_diagnostics(self) -> Dict[str, Any]:
+	def get_diagnostics(self) -> dict[str, Any]:
 		"""Get Redis transport diagnostics."""
 		from lms.langchain.config import use_redis_mode
 

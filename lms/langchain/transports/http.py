@@ -4,7 +4,7 @@ Sends events to the LangChain service via HTTP POST requests,
 using Frappe's background job queue for asynchronous delivery.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import frappe
 
@@ -81,7 +81,7 @@ class HttpEventTransport(EventTransport):
 		"""
 		return True
 
-	def get_diagnostics(self) -> Dict[str, Any]:
+	def get_diagnostics(self) -> dict[str, Any]:
 		"""Get HTTP transport diagnostics."""
 		from lms.langchain.config import get_langchain_service_url
 

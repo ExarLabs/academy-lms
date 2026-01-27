@@ -5,7 +5,7 @@ enabling the Strategy pattern for pluggable event delivery.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 
 class EventTransport(ABC):
@@ -62,7 +62,7 @@ class EventTransport(ABC):
 		"""
 		pass
 
-	def get_diagnostics(self) -> Dict[str, Any]:
+	def get_diagnostics(self) -> dict[str, Any]:
 		"""Get diagnostic information about this transport.
 
 		Override in subclasses to provide transport-specific diagnostics

@@ -9,7 +9,7 @@ The actual Socket.IO communication is handled by the SocketIOStreamAdapter,
 keeping this module focused on orchestration logic.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import frappe
 
@@ -22,7 +22,7 @@ def request_streaming_response(
 	user_id: str,
 	message: str,
 	module_id: str,
-	context: Optional[Dict[str, Any]] = None,
+	context: dict[str, Any] | None = None,
 ) -> str:
 	"""Request a streaming AI tutor response.
 
@@ -57,7 +57,7 @@ def subscribe_and_forward_to_socketio(
 	user_id: str,
 	request_id: str,
 	timeout: float = 60.0,
-) -> Optional[str]:
+) -> str | None:
 	"""Subscribe to streaming response and forward chunks to Socket.IO.
 
 	This function is designed to be run as a background job via frappe.enqueue().

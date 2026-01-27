@@ -37,7 +37,7 @@ class LangchainMessageBroker:
 
 	def __init__(
 		self,
-		transport: Optional[EventTransport] = None,
+		transport: EventTransport | None = None,
 		queue: str = "default",
 		enqueue_after_commit: bool = True,
 	):
@@ -52,7 +52,7 @@ class LangchainMessageBroker:
 		self._explicit_transport = transport
 		self._queue = queue
 		self._enqueue_after_commit = enqueue_after_commit
-		self._cached_transport: Optional[EventTransport] = None
+		self._cached_transport: EventTransport | None = None
 
 	def _get_transport(self) -> EventTransport:
 		"""Get the appropriate transport for sending events.

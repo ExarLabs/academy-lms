@@ -7,7 +7,8 @@ from the beginning.
 """
 
 import threading
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 import frappe
 
@@ -32,9 +33,9 @@ class TutorStreamSubscriber:
 		self,
 		user_id: str,
 		request_id: str,
-		on_chunk: Optional[Callable[[str, int], None]] = None,
-		on_complete: Optional[Callable[[str, int], None]] = None,
-		on_error: Optional[Callable[[str, str], None]] = None,
+		on_chunk: Callable[[str, int], None] | None = None,
+		on_complete: Callable[[str, int], None] | None = None,
+		on_error: Callable[[str, str], None] | None = None,
 	):
 		"""Initialize the streaming response handler.
 
@@ -52,7 +53,7 @@ class TutorStreamSubscriber:
 		self.on_error = on_error
 
 		self._stream_key = f"lms:stream:{user_id}:{request_id}"
-		self._thread: Optional[threading.Thread] = None
+		self._thread: threading.Thread | None = None
 		self._running = False
 
 		# Track last read ID for incremental reads
@@ -60,7 +61,7 @@ class TutorStreamSubscriber:
 
 		# Accumulated response
 		self._chunks: list = []
-		self._complete_response: Optional[str] = None
+		self._complete_response: str | None = None
 
 	def start(self, timeout: float = 60.0) -> None:
 		"""Start listening for streaming responses.
@@ -95,7 +96,7 @@ class TutorStreamSubscriber:
 			self._thread.join(timeout=1.0)
 			self._thread = None
 
-	def wait_for_completion(self, timeout: float = 60.0) -> Optional[str]:
+	def wait_for_completion(self, timeout: float = 60.0) -> str | None:
 		"""Wait for the stream to complete and return the full response.
 
 		Args:
@@ -175,7 +176,7 @@ class TutorStreamSubscriber:
 
 				# Process all entries from the stream
 				# Result format: [[stream_key, [(entry_id, fields), ...]]]
-				for stream_key, entries in result:
+				for _stream_key, entries in result:
 					for entry_id, fields in entries:
 						self._last_id = entry_id
 						should_stop = self._handle_message(fields)
@@ -204,7 +205,7 @@ class TutorStreamSubscriber:
 			except Exception:
 				pass
 
-	def _handle_message(self, fields: Dict[str, Any]) -> bool:
+	def _handle_message(self, fields: dict[str, Any]) -> bool:
 		"""Handle an incoming stream message.
 
 		Args:
@@ -266,9 +267,9 @@ class TutorStreamSubscriber:
 def create_tutor_stream_subscriber(
 	user_id: str,
 	request_id: str,
-	on_chunk: Optional[Callable[[str, int], None]] = None,
-	on_complete: Optional[Callable[[str, int], None]] = None,
-	on_error: Optional[Callable[[str, str], None]] = None,
+	on_chunk: Callable[[str, int], None] | None = None,
+	on_complete: Callable[[str, int], None] | None = None,
+	on_error: Callable[[str, str], None] | None = None,
 ) -> TutorStreamSubscriber:
 	"""Factory function to create a tutor stream subscriber.
 

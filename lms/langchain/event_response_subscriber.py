@@ -7,7 +7,8 @@ to the frontend via Frappe's Socket.IO (publish_realtime).
 import json
 import threading
 import time
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 import frappe
 
@@ -32,10 +33,10 @@ class EventResponseSubscriber:
 
 	def __init__(self) -> None:
 		"""Initialize the subscriber."""
-		self._thread: Optional[threading.Thread] = None
+		self._thread: threading.Thread | None = None
 		self._running = False
 		self._pubsub = None
-		self._site: Optional[str] = None
+		self._site: str | None = None
 
 	@property
 	def is_running(self) -> bool:
@@ -127,7 +128,7 @@ class EventResponseSubscriber:
 						f"Error handling response: {e}", exc_info=True
 					)
 
-	def _handle_response(self, channel: str, data: Dict[str, Any]) -> None:
+	def _handle_response(self, channel: str, data: dict[str, Any]) -> None:
 		"""Handle a response from LangChain and forward to Socket.IO.
 
 		Args:
@@ -139,7 +140,7 @@ class EventResponseSubscriber:
 
 		if not user_id or not content:
 			frappe.logger("langchain").debug(
-				f"Skipping response without user_id or content"
+				"Skipping response without user_id or content"
 			)
 			return
 
@@ -176,7 +177,7 @@ class EventResponseSubscriber:
 
 
 # Singleton instance
-_subscriber: Optional[EventResponseSubscriber] = None
+_subscriber: EventResponseSubscriber | None = None
 _subscriber_lock = threading.Lock()
 
 
