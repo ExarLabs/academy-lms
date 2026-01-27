@@ -91,19 +91,25 @@ A modular integration with external LangChain service for AI features:
 lms/langchain/
 ├── __init__.py                    # Package exports
 ├── config.py                      # Configuration helpers (use_redis_mode, get_langchain_service_url, get_ai_tutor_url)
-├── broker.py                      # LangchainMessageBroker class for event dispatch
+├── broker.py                      # LangchainMessageBroker - uses Strategy pattern with pluggable transports
 ├── lms_event_handlers.py          # 6 document event handlers
 ├── event_response_subscriber.py   # Redis pub/sub subscriber for LangChain responses
 ├── tutor_stream_subscriber.py     # TutorStreamSubscriber for AI Tutor streaming via Redis Streams
 ├── streaming.py                   # Streaming response orchestration (subscribe_and_forward_to_socketio)
 ├── repositories.py                # Data persistence layer (save_langchain_response, response_exists)
-├── service.py                     # HTTP client for LangChain API
+├── service.py                     # HTTP client for LangChain API (with retry/backoff)
 ├── messages.py                    # Event message builder
 ├── api.py                         # API endpoints (post_langchain_response, send_frontend_event)
 ├── exceptions.py                  # Custom exception hierarchy (LangchainError, StreamingError, etc.)
 ├── tutor.py                       # ask_tutor() AI chat endpoint
-└── adapters/                      # Output channel adapters
-    └── socketio.py                # SocketIOStreamAdapter - bridges streaming to Socket.IO
+├── adapters/                      # Output channel adapters
+│   └── socketio.py                # SocketIOStreamAdapter - bridges streaming to Socket.IO
+├── transports/                    # Pluggable transport layer (Strategy pattern)
+│   ├── base.py                    # EventTransport abstract base class
+│   ├── http.py                    # HttpEventTransport - async via Frappe queue
+│   └── redis.py                   # RedisEventTransport - direct pub/sub with HTTP fallback
+└── utils/                         # Cross-cutting utilities
+    └── resilience.py              # retry_on_exception decorator, RetryContext
 ```
 
 **AI Tutor:**
@@ -113,11 +119,12 @@ lms/langchain/
 
 **Event Broker Architecture:**
 1. Document events trigger handlers in `lms/langchain/lms_event_handlers.py`
-2. Handlers use `LangchainMessageBroker` to enqueue events via `frappe.enqueue()`
-3. Background job in `service.py` sends structured payload to LangChain API
-4. `EventResponseSubscriber` listens on Redis pub/sub for LangChain responses (started via `before_request` hook in web workers)
-5. Response stored and pushed via `frappe.publish_realtime()` to specific user
-6. Frontend receives real-time update via Socket.IO
+2. Handlers use `LangchainMessageBroker` which selects transport via Strategy pattern:
+   - **HTTP transport** (default): Enqueues background job via `frappe.enqueue()`, sends HTTP POST with retry/backoff
+   - **Redis transport**: Publishes directly to Redis pub/sub (faster), falls back to HTTP on failure
+3. `EventResponseSubscriber` listens on Redis pub/sub for LangChain responses (started via `before_request` hook in web workers)
+4. Response stored and pushed via `frappe.publish_realtime()` to specific user
+5. Frontend receives real-time update via Socket.IO
 
 **Document event hooks (configured in `hooks.py`):**
 - `LMS Course Progress.on_update` → `lms.langchain.lms_event_handlers.handle_course_progress_update`

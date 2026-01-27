@@ -5,6 +5,8 @@ This module provides:
 - AI Tutor chat functionality with streaming support
 - Document event handlers for LMS events
 - Repository pattern for data persistence
+- Pluggable transport layer (HTTP, Redis) via Strategy pattern
+- Resilience utilities for fault tolerance
 """
 
 # Config
@@ -74,6 +76,16 @@ from lms.langchain.exceptions import (
 # Adapters
 from lms.langchain.adapters import SocketIOStreamAdapter
 
+# Transports (Strategy pattern)
+from lms.langchain.transports import (
+	EventTransport,
+	HttpEventTransport,
+	RedisEventTransport,
+)
+
+# Utilities
+from lms.langchain.utils import retry_on_exception
+
 __all__ = [
 	# Config
 	"get_langchain_service_url",
@@ -121,4 +133,10 @@ __all__ = [
 	"ConfigurationError",
 	# Adapters
 	"SocketIOStreamAdapter",
+	# Transports
+	"EventTransport",
+	"HttpEventTransport",
+	"RedisEventTransport",
+	# Utilities
+	"retry_on_exception",
 ]

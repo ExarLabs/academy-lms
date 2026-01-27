@@ -1,65 +1,127 @@
-"""Message broker for sending LMS events to LangChain service."""
+"""Message broker for sending LMS events to LangChain service.
+
+Uses the Strategy pattern to support pluggable transport mechanisms.
+Transport selection is based on configuration and availability.
+"""
+
+from typing import Optional
 
 import frappe
 
 from lms.langchain.config import use_redis_mode
-from lms.langchain.service import send_to_langchain_service
+from lms.langchain.transports.base import EventTransport
 
 
 class LangchainMessageBroker:
 	"""Broker for sending LMS events to LangChain service.
 
-	Supports two modes:
-	- HTTP mode (default): Uses frappe.enqueue() to send events via HTTP POST
-	- Redis mode: Publishes events directly to Redis pub/sub channels
+	Supports pluggable transports via the Strategy pattern:
+	- HTTP transport (default): Uses frappe.enqueue() to send events via HTTP POST
+	- Redis transport: Publishes events directly to Redis pub/sub channels
 
-	Set `langchain_use_redis: true` in site_config.json to enable Redis mode.
+	The broker automatically selects the appropriate transport based on
+	configuration and availability. Redis transport falls back to HTTP
+	on failure.
+
+	Configuration:
+		Set `langchain_use_redis: true` in site_config.json to enable Redis mode.
+
+	Example:
+		broker = LangchainMessageBroker()
+		broker.send("quiz_submission", user="user@example.com", score=85)
+
+		# Or with explicit transport:
+		from lms.langchain.transports import HttpEventTransport
+		broker = LangchainMessageBroker(transport=HttpEventTransport())
 	"""
 
-	def __init__(self, queue="default", enqueue_after_commit=True):
-		self.queue = queue
-		self.enqueue_after_commit = enqueue_after_commit
+	def __init__(
+		self,
+		transport: Optional[EventTransport] = None,
+		queue: str = "default",
+		enqueue_after_commit: bool = True,
+	):
+		"""Initialize the message broker.
 
-	def send(self, event_type, **kwargs):
-		"""Send event to LangChain service via configured mode."""
-		if use_redis_mode():
-			self._send_via_redis(event_type, **kwargs)
-		else:
-			self._send_via_http(event_type, **kwargs)
-
-	def _send_via_http(self, event_type, **kwargs):
-		"""Send event via HTTP (original behavior).
-
-		Enqueues a background job that makes an HTTP POST to the LangChain service.
+		Args:
+			transport: Explicit transport to use. If None, transport is
+				selected automatically based on configuration.
+			queue: Frappe queue name for HTTP transport background jobs.
+			enqueue_after_commit: If True, HTTP jobs enqueue after DB commit.
 		"""
-		frappe.enqueue(
-			send_to_langchain_service,
-			queue=self.queue,
-			enqueue_after_commit=self.enqueue_after_commit,
-			event_type=event_type,
-			**kwargs,
+		self._explicit_transport = transport
+		self._queue = queue
+		self._enqueue_after_commit = enqueue_after_commit
+		self._cached_transport: Optional[EventTransport] = None
+
+	def _get_transport(self) -> EventTransport:
+		"""Get the appropriate transport for sending events.
+
+		Returns:
+			EventTransport instance based on configuration and availability.
+		"""
+		if self._explicit_transport:
+			return self._explicit_transport
+
+		# Lazy import to avoid circular dependencies
+		from lms.langchain.transports import HttpEventTransport, RedisEventTransport
+
+		if use_redis_mode():
+			# Redis transport with HTTP fallback
+			http_fallback = HttpEventTransport(
+				queue=self._queue,
+				enqueue_after_commit=self._enqueue_after_commit,
+			)
+			return RedisEventTransport(fallback_transport=http_fallback)
+		else:
+			return HttpEventTransport(
+				queue=self._queue,
+				enqueue_after_commit=self._enqueue_after_commit,
+			)
+
+	@property
+	def transport(self) -> EventTransport:
+		"""Current transport instance.
+
+		Uses caching for repeated access, but re-evaluates on each
+		send() call to respect configuration changes.
+		"""
+		if self._cached_transport is None:
+			self._cached_transport = self._get_transport()
+		return self._cached_transport
+
+	def send(self, event_type: str, **kwargs) -> bool:
+		"""Send event to LangChain service via configured transport.
+
+		Args:
+			event_type: Type of event (e.g., "quiz_submission", "enrollment")
+			**kwargs: Event payload data
+
+		Returns:
+			True if the event was sent successfully, False otherwise.
+		"""
+		# Get fresh transport to respect any config changes
+		transport = self._get_transport()
+
+		frappe.logger("langchain").debug(
+			f"Sending event '{event_type}' via {transport.name} transport"
 		)
 
-	def _send_via_redis(self, event_type, **kwargs):
-		"""Send event via Redis pub/sub.
+		return transport.send(event_type, **kwargs)
 
-		Publishes directly to Redis channel for consumption by the LangChain service.
-		This is faster and doesn't require HTTP connectivity between services.
+	def get_diagnostics(self):
+		"""Get diagnostic information about the broker and transport.
+
+		Returns:
+			Dictionary with broker and transport diagnostics.
 		"""
-		from lms.langchain.redis_publisher import get_publisher
-
-		try:
-			publisher = get_publisher()
-			publisher.publish_event(event_type, **kwargs)
-			frappe.logger("langchain").debug(
-				f"Published event via Redis: {event_type}"
-			)
-		except Exception as e:
-			frappe.logger("langchain").error(
-				f"Failed to publish event via Redis: {e}. Falling back to HTTP."
-			)
-			# Fallback to HTTP on Redis failure
-			self._send_via_http(event_type, **kwargs)
+		transport = self._get_transport()
+		return {
+			"broker": "LangchainMessageBroker",
+			"redis_mode_configured": use_redis_mode(),
+			"explicit_transport": self._explicit_transport is not None,
+			"transport": transport.get_diagnostics(),
+		}
 
 
 # Default broker instance
