@@ -13,9 +13,9 @@ from typing import Any
 
 import frappe
 
-from .adapters.socketio import SocketIOStreamAdapter
-from .redis_publisher import get_publisher
-from .tutor_stream_subscriber import create_tutor_stream_subscriber
+from lms.langchain.communication.redis.pubsub.publisher import get_publisher
+from lms.langchain.tutor_chat.adapters.socketio import SocketIOStreamAdapter
+from lms.langchain.tutor_chat.stream_subscriber import create_tutor_stream_subscriber
 
 
 def request_streaming_response(

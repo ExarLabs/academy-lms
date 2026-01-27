@@ -17,7 +17,7 @@ def send_frontend_event(event_type, **kwargs):
 	Returns:
 		dict: {"status": "queued", "event_type": event_type}
 	"""
-	from lms.langchain.broker import broker
+	from lms.langchain.lms_events.broker import broker
 
 	# Add current user if not provided
 	if "user" not in kwargs:

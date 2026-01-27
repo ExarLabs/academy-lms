@@ -69,7 +69,7 @@ def _ask_tutor_streaming(user_id, message, module_id, current_lesson, course_nam
 	Returns:
 		dict with mode="streaming" and request_id
 	"""
-	from lms.langchain.streaming import (
+	from lms.langchain.tutor_chat.streaming import (
 		request_streaming_response,
 		subscribe_and_forward_to_socketio,
 	)

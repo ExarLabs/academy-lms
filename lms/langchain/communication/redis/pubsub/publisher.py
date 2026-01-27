@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 import frappe
 
-from .redis_client import publish_message
+from lms.langchain.communication.redis.client import publish_message
 
 
 class RedisEventPublisher:

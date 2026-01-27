@@ -7,7 +7,7 @@ to the user's browser.
 
 import frappe
 
-from ..repositories import save_langchain_response
+from lms.langchain.repositories import save_langchain_response
 
 
 class SocketIOStreamAdapter:

@@ -7,7 +7,7 @@ Transport selection is based on configuration and availability.
 import frappe
 
 from lms.langchain.config import use_redis_mode
-from lms.langchain.transports.base import EventTransport
+from lms.langchain.lms_events.transports.base import EventTransport
 
 
 class LangchainMessageBroker:
@@ -29,7 +29,7 @@ class LangchainMessageBroker:
 		broker.send("quiz_submission", user="user@example.com", score=85)
 
 		# Or with explicit transport:
-		from lms.langchain.transports import HttpEventTransport
+		from lms.langchain.lms_events.transports import HttpEventTransport
 		broker = LangchainMessageBroker(transport=HttpEventTransport())
 	"""
 
@@ -62,7 +62,7 @@ class LangchainMessageBroker:
 			return self._explicit_transport
 
 		# Lazy import to avoid circular dependencies
-		from lms.langchain.transports import HttpEventTransport, RedisEventTransport
+		from lms.langchain.lms_events.transports import HttpEventTransport, RedisEventTransport
 
 		if use_redis_mode():
 			# Redis transport with HTTP fallback

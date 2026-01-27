@@ -12,7 +12,7 @@ from typing import Any
 
 import frappe
 
-from .redis_client import get_redis_client
+from lms.langchain.communication.redis.client import get_redis_client
 
 
 class TutorStreamSubscriber:
@@ -73,7 +73,7 @@ class TutorStreamSubscriber:
 
 		# Capture context from main thread (frappe.local not available in spawned threads)
 		# Thread needs: site_name (for frappe.init), redis_url (for Redis connection)
-		from .redis_client import get_redis_url
+		from lms.langchain.communication.redis.client import get_redis_url
 		redis_url = get_redis_url()
 		site_name = frappe.local.site
 		frappe.logger("langchain").info(

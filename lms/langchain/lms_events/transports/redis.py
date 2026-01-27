@@ -9,7 +9,7 @@ from typing import Any
 
 import frappe
 
-from lms.langchain.transports.base import EventTransport
+from lms.langchain.lms_events.transports.base import EventTransport
 
 
 class RedisEventTransport(EventTransport):
@@ -47,7 +47,7 @@ class RedisEventTransport(EventTransport):
 		Returns:
 			True if published successfully (or fallback succeeded).
 		"""
-		from lms.langchain.redis_publisher import get_publisher
+		from lms.langchain.communication.redis.pubsub.publisher import get_publisher
 
 		try:
 			publisher = get_publisher()
@@ -81,7 +81,7 @@ class RedisEventTransport(EventTransport):
 			return False
 
 		try:
-			from lms.langchain.redis_client import get_redis_client
+			from lms.langchain.communication.redis.client import get_redis_client
 
 			client = get_redis_client()
 			return client.ping() if client else False

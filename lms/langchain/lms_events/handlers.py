@@ -1,6 +1,6 @@
 """Document event handlers for LMS events that trigger LangChain service notifications."""
 
-from lms.langchain.broker import broker
+from lms.langchain.lms_events.broker import broker
 
 
 def handle_course_progress_update(doc, method):

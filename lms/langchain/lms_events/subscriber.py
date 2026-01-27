@@ -7,14 +7,13 @@ to the frontend via Frappe's Socket.IO (publish_realtime).
 import json
 import threading
 import time
-from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 import frappe
 
-from .config import use_redis_mode
-from .redis_client import get_redis_client, get_redis_url
-from .repositories import save_langchain_response
+from lms.langchain.communication.redis.client import get_redis_client
+from lms.langchain.config import use_redis_mode
+from lms.langchain.repositories import save_langchain_response
 
 
 class EventResponseSubscriber:

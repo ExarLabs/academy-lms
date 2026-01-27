@@ -11,13 +11,13 @@ This module provides:
 
 # Config
 # Adapters
-from lms.langchain.adapters import SocketIOStreamAdapter
+from lms.langchain.tutor_chat.adapters.socketio import SocketIOStreamAdapter
 
 # API endpoints
 from lms.langchain.api import post_langchain_response, send_frontend_event
 
 # Message broker
-from lms.langchain.broker import LangchainMessageBroker, broker
+from lms.langchain.lms_events.broker import LangchainMessageBroker, broker
 from lms.langchain.config import (
 	get_ai_tutor_url,
 	get_langchain_service_url,
@@ -25,7 +25,7 @@ from lms.langchain.config import (
 )
 
 # Event response subscriber (for document events)
-from lms.langchain.event_response_subscriber import (
+from lms.langchain.lms_events.subscriber import (
 	EventResponseSubscriber,
 	ensure_subscriber_running,
 	get_subscriber,
@@ -43,7 +43,7 @@ from lms.langchain.exceptions import (
 )
 
 # Event handlers
-from lms.langchain.lms_event_handlers import (
+from lms.langchain.lms_events.handlers import (
 	handle_assignment_status_update,
 	handle_assignment_submission,
 	handle_certificate_issued,
@@ -63,18 +63,18 @@ from lms.langchain.repositories import (
 )
 
 # Service functions
-from lms.langchain.service import send_to_langchain_service
+from lms.langchain.communication.http.client import send_to_langchain_service
 
 # Transports (Strategy pattern)
-from lms.langchain.transports import (
+from lms.langchain.lms_events.transports import (
 	EventTransport,
 	HttpEventTransport,
 	RedisEventTransport,
 )
-from lms.langchain.tutor import ask_tutor
+from lms.langchain.tutor_chat.api import ask_tutor
 
 # Tutor stream subscriber (for AI Tutor streaming responses)
-from lms.langchain.tutor_stream_subscriber import (
+from lms.langchain.tutor_chat.stream_subscriber import (
 	# Backward compatibility aliases
 	StreamingResponseHandler,
 	TutorStreamSubscriber,

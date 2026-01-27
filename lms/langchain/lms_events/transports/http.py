@@ -8,7 +8,7 @@ from typing import Any
 
 import frappe
 
-from lms.langchain.transports.base import EventTransport
+from lms.langchain.lms_events.transports.base import EventTransport
 
 
 class HttpEventTransport(EventTransport):
@@ -49,7 +49,7 @@ class HttpEventTransport(EventTransport):
 		Returns:
 			True if the job was enqueued successfully.
 		"""
-		from lms.langchain.service import send_to_langchain_service
+		from lms.langchain.communication.http.client import send_to_langchain_service
 
 		try:
 			frappe.enqueue(

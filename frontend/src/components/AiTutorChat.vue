@@ -241,7 +241,7 @@ const sendMessage = async () => {
 	isLoading.value = true
 
 	try {
-		const response = await call('lms.langchain.tutor.ask_tutor', {
+		const response = await call('lms.langchain.tutor_chat.api.ask_tutor', {
 			message: message,
 			current_lesson: props.lessonName,
 			course_name: props.courseName,
