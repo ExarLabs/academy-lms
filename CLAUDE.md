@@ -93,7 +93,6 @@ lms/langchain/
 ├── config.py                      # Configuration helpers (use_redis_mode, get_langchain_service_url, get_ai_tutor_url)
 ├── repositories.py                # Data persistence layer (save_langchain_response, response_exists)
 ├── messages.py                    # Event message builder
-├── api.py                         # API endpoints (post_langchain_response, send_frontend_event)
 ├── exceptions.py                  # Custom exception hierarchy (LangchainError, StreamingError, etc.)
 ├── communication/                 # Infrastructure (HTTP + Redis)
 │   ├── http/
@@ -103,6 +102,7 @@ lms/langchain/
 │       └── pubsub/
 │           └── publisher.py       # Redis pub/sub publisher
 ├── lms_events/                    # LMS document events feature
+│   ├── api.py                     # send_frontend_event() endpoint for frontend-triggered events
 │   ├── broker.py                  # LangchainMessageBroker - uses Strategy pattern with pluggable transports
 │   ├── handlers.py                # 6 document event handlers
 │   ├── subscriber.py              # Redis pub/sub subscriber for LangChain responses
@@ -111,7 +111,7 @@ lms/langchain/
 │       ├── http.py                # HttpEventTransport - async via Frappe queue
 │       └── redis.py               # RedisEventTransport - direct pub/sub with HTTP fallback
 ├── tutor_chat/                    # AI Tutor chat feature
-│   ├── api.py                     # ask_tutor() AI chat endpoint
+│   ├── api.py                     # ask_tutor() chat endpoint, post_langchain_response() callback
 │   ├── streaming.py               # Streaming response orchestration (subscribe_and_forward_to_socketio)
 │   ├── stream_subscriber.py       # TutorStreamSubscriber for AI Tutor streaming via Redis Streams
 │   └── adapters/

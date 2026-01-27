@@ -13,11 +13,9 @@ This module provides:
 # Adapters
 from lms.langchain.tutor_chat.adapters.socketio import SocketIOStreamAdapter
 
-# API endpoints
-from lms.langchain.api import post_langchain_response, send_frontend_event
-
 # Message broker
 from lms.langchain.lms_events.broker import LangchainMessageBroker, broker
+from lms.langchain.lms_events.api import send_frontend_event
 from lms.langchain.config import (
 	get_ai_tutor_url,
 	get_langchain_service_url,
@@ -71,7 +69,7 @@ from lms.langchain.lms_events.transports import (
 	HttpEventTransport,
 	RedisEventTransport,
 )
-from lms.langchain.tutor_chat.api import ask_tutor
+from lms.langchain.tutor_chat.api import ask_tutor, post_langchain_response
 
 # Tutor stream subscriber (for AI Tutor streaming responses)
 from lms.langchain.tutor_chat.stream_subscriber import (
