@@ -16,6 +16,7 @@ from lms.langchain.tutor_chat.adapters.socketio import SocketIOStreamAdapter
 # Message broker
 from lms.langchain.lms_events.broker import LangchainMessageBroker, broker
 from lms.langchain.lms_events.api import send_frontend_event
+from lms.langchain.lms_events.events import EventType
 from lms.langchain.config import (
 	get_ai_tutor_url,
 	get_langchain_service_url,
@@ -42,7 +43,7 @@ from lms.langchain.lms_events.handlers import (
 )
 
 # Message utilities
-from lms.langchain.messages import build_event_message
+from lms.langchain.communication.http.messages import build_event_message
 
 # Repositories
 from lms.langchain.repositories import (
@@ -82,6 +83,7 @@ __all__ = [
 	# Broker
 	"LangchainMessageBroker",
 	"broker",
+	"EventType",
 	# Event handlers
 	"handle_course_progress_update",
 	"handle_quiz_submission",

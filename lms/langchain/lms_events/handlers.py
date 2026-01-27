@@ -1,12 +1,13 @@
 """Document event handlers for LMS events that trigger LangChain service notifications."""
 
 from lms.langchain.lms_events.broker import broker
+from lms.langchain.lms_events.events import EventType
 
 
 def handle_course_progress_update(doc, method):
 	"""Handler for LMS Course Progress on_update event."""
 	broker.send(
-		event_type="course_progress",
+		event_type=EventType.COURSE_PROGRESS.value,
 		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
@@ -18,7 +19,7 @@ def handle_course_progress_update(doc, method):
 def handle_quiz_submission(doc, method):
 	"""Handler for LMS Quiz Submission after_insert event."""
 	broker.send(
-		event_type="quiz_submission",
+		event_type=EventType.QUIZ_SUBMISSION.value,
 		user_id=doc.member,
 		course=doc.course,
 		quiz=doc.quiz,
@@ -33,7 +34,7 @@ def handle_quiz_submission(doc, method):
 def handle_assignment_submission(doc, method):
 	"""Handler for LMS Assignment Submission after_insert event."""
 	broker.send(
-		event_type="assignment_submission",
+		event_type=EventType.ASSIGNMENT_SUBMISSION.value,
 		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
@@ -54,7 +55,7 @@ def handle_assignment_status_update(doc, method):
 		return
 
 	broker.send(
-		event_type="assignment_status_update",
+		event_type=EventType.ASSIGNMENT_STATUS_UPDATE.value,
 		user_id=doc.member,
 		course=doc.course,
 		lesson=doc.lesson,
@@ -68,7 +69,7 @@ def handle_assignment_status_update(doc, method):
 def handle_enrollment(doc, method):
 	"""Handler for LMS Enrollment after_insert event."""
 	broker.send(
-		event_type="enrollment",
+		event_type=EventType.ENROLLMENT.value,
 		user_id=doc.member,
 		course=doc.course,
 		member_name=doc.member_name,
@@ -79,7 +80,7 @@ def handle_enrollment(doc, method):
 def handle_certificate_issued(doc, method):
 	"""Handler for LMS Certificate after_insert event."""
 	broker.send(
-		event_type="certificate_issued",
+		event_type=EventType.CERTIFICATE_ISSUED.value,
 		user_id=doc.member,
 		course=doc.course,
 		course_title=doc.course_title,

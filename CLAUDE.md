@@ -92,10 +92,10 @@ lms/langchain/
 ├── __init__.py                    # Package exports
 ├── config.py                      # Configuration helpers (use_redis_mode, get_langchain_service_url, get_ai_tutor_url)
 ├── repositories.py                # Data persistence layer (save_langchain_response, response_exists)
-├── messages.py                    # Event message builder
 ├── communication/                 # Infrastructure (HTTP + Redis)
 │   ├── http/
-│   │   └── client.py              # HTTP client for LangChain API (with retry/backoff)
+│   │   ├── client.py              # HTTP client for LangChain API (with retry/backoff)
+│   │   └── messages.py            # Event message builder (build_event_message)
 │   └── redis/
 │       ├── client.py              # Redis client + pubsub helpers
 │       └── pubsub/
@@ -103,7 +103,8 @@ lms/langchain/
 ├── lms_events/                    # LMS document events feature
 │   ├── api.py                     # send_frontend_event() endpoint for frontend-triggered events
 │   ├── broker.py                  # LangchainMessageBroker - uses Strategy pattern with pluggable transports
-│   ├── handlers.py                # 6 document event handlers
+│   ├── events.py                  # EventType enum - centralized event type definitions
+│   ├── handlers.py                # 6 document event handlers (use EventType enum)
 │   ├── subscriber.py              # Redis pub/sub subscriber for LangChain responses
 │   └── transports/                # Pluggable transport layer (Strategy pattern)
 │       ├── base.py                # EventTransport abstract base class

@@ -6,7 +6,7 @@ import frappe
 import requests
 
 from lms.langchain.config import get_langchain_service_url
-from lms.langchain.messages import build_event_message
+from lms.langchain.communication.http.messages import build_event_message
 from lms.langchain.tutor_chat.api import post_langchain_response
 from lms.langchain.utils.resilience import retry_on_exception
 
