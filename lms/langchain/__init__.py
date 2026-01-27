@@ -31,15 +31,6 @@ from lms.langchain.lms_events.subscriber import (
 	stop_event_response_subscriber,
 )
 
-# Exceptions
-from lms.langchain.exceptions import (
-	ConfigurationError,
-	LangchainError,
-	PersistenceError,
-	ServiceUnavailableError,
-	StreamingError,
-)
-
 # Event handlers
 from lms.langchain.lms_events.handlers import (
 	handle_assignment_status_update,
@@ -122,12 +113,6 @@ __all__ = [
 	# Backward compatibility
 	"StreamingResponseHandler",
 	"create_stream_handler",
-	# Exceptions
-	"LangchainError",
-	"ServiceUnavailableError",
-	"StreamingError",
-	"PersistenceError",
-	"ConfigurationError",
 	# Adapters
 	"SocketIOStreamAdapter",
 	# Transports

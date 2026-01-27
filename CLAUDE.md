@@ -93,7 +93,6 @@ lms/langchain/
 ├── config.py                      # Configuration helpers (use_redis_mode, get_langchain_service_url, get_ai_tutor_url)
 ├── repositories.py                # Data persistence layer (save_langchain_response, response_exists)
 ├── messages.py                    # Event message builder
-├── exceptions.py                  # Custom exception hierarchy (LangchainError, StreamingError, etc.)
 ├── communication/                 # Infrastructure (HTTP + Redis)
 │   ├── http/
 │   │   └── client.py              # HTTP client for LangChain API (with retry/backoff)

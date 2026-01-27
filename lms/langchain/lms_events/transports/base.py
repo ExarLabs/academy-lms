@@ -33,9 +33,6 @@ class EventTransport(ABC):
 		Returns:
 			True if the event was sent successfully, False otherwise.
 
-		Raises:
-			ServiceUnavailableError: If the transport's target service is unreachable.
-			LangchainError: For other transport-specific errors.
 		"""
 		pass
 
