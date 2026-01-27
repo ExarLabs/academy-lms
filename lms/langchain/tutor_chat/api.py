@@ -175,7 +175,9 @@ def _ask_tutor_sync(user_id, message, current_lesson, course_name):
 		"user_id": user_id,
 		"message": message,
 		"current_lesson": current_lesson or "Course Overview",
-		"course_name": course_name or "General Course",
+		"context": {
+			"course_name": course_name or "General Course",
+		},
 	}
 
 	api_endpoint = get_ai_tutor_url()

@@ -24,4 +24,4 @@ def get_langchain_service_url():
 def get_ai_tutor_url():
 	"""Get AI Tutor API URL from site config, with localhost default for development."""
 	base_url = frappe.conf.get("ai_tutor_api_url", "http://localhost:7999")
-	return f"{base_url}/api/v1/ai-tutor/chat"
+	return f"{base_url}/api/v1/ai/tutor/chat"
