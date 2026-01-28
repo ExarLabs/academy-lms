@@ -26,14 +26,14 @@
 							<span class="text-xs font-medium text-blue-600">AI Tutor</span>
 						</div>
 						<div class="text-sm text-ink-gray-8 whitespace-pre-wrap leading-relaxed">
-							{{ msg.text }}
+							{{ msg.text }}<span v-if="msg.isStreaming" class="animate-pulse">|</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- Typing indicator -->
-			<div v-if="isLoading" class="flex justify-start">
+			<!-- Typing indicator (only show when waiting for stream to start) -->
+			<div v-if="isLoading && !isStreaming" class="flex justify-start">
 				<div>
 					<div class="flex items-center mb-1">
 						<Sparkles class="size-3 text-blue-600 mr-1" />
@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, inject } from 'vue'
 import { Button, call } from 'frappe-ui'
 import { Sparkles, Send } from 'lucide-vue-next'
 
@@ -89,9 +89,13 @@ const props = defineProps({
 	},
 })
 
+const socket = inject('$socket')
 const messages = ref([])
 const inputMessage = ref('')
 const isLoading = ref(false)
+const isStreaming = ref(false)
+const currentRequestId = ref(null)
+const streamingMessageIndex = ref(null)
 
 // localStorage key for persistence
 const storageKey = computed(() => `ai_tutor_${props.courseName}_${props.lessonName}`)
@@ -99,6 +103,12 @@ const storageKey = computed(() => `ai_tutor_${props.courseName}_${props.lessonNa
 // Load messages from localStorage on mount
 onMounted(() => {
 	loadMessages()
+	setupSocketListeners()
+})
+
+// Clean up socket listeners on unmount
+onUnmounted(() => {
+	cleanupSocketListeners()
 })
 
 // Watch for lesson changes and load appropriate history
@@ -110,7 +120,9 @@ const loadMessages = () => {
 	const stored = localStorage.getItem(storageKey.value)
 	if (stored) {
 		try {
-			messages.value = JSON.parse(stored)
+			const parsed = JSON.parse(stored)
+			// Filter out any incomplete streaming messages from previous sessions
+			messages.value = parsed.filter(msg => !msg.isStreaming)
 		} catch (e) {
 			console.warn('Failed to parse stored AI tutor messages')
 			messages.value = []
@@ -122,8 +134,102 @@ const loadMessages = () => {
 
 // Save messages to localStorage when they change
 watch(messages, (newMessages) => {
-	localStorage.setItem(storageKey.value, JSON.stringify(newMessages))
+	// Don't save messages that are still streaming
+	const toSave = newMessages.map(msg => ({
+		...msg,
+		isStreaming: false,
+	}))
+	localStorage.setItem(storageKey.value, JSON.stringify(toSave))
 }, { deep: true })
+
+// Socket.IO event handlers
+const setupSocketListeners = () => {
+	socket.on('ai_tutor_stream_start', handleStreamStart)
+	socket.on('ai_tutor_stream_chunk', handleStreamChunk)
+	socket.on('ai_tutor_stream_end', handleStreamEnd)
+	socket.on('ai_tutor_stream_error', handleStreamError)
+}
+
+const cleanupSocketListeners = () => {
+	socket.off('ai_tutor_stream_start', handleStreamStart)
+	socket.off('ai_tutor_stream_chunk', handleStreamChunk)
+	socket.off('ai_tutor_stream_end', handleStreamEnd)
+	socket.off('ai_tutor_stream_error', handleStreamError)
+}
+
+const handleStreamStart = (data) => {
+	if (data.request_id !== currentRequestId.value) return
+
+	isStreaming.value = true
+
+	// Add empty streaming message
+	streamingMessageIndex.value = messages.value.length
+	messages.value.push({
+		text: '',
+		isUser: false,
+		isStreaming: true,
+	})
+}
+
+const handleStreamChunk = (data) => {
+	if (data.request_id !== currentRequestId.value) return
+	if (streamingMessageIndex.value === null) return
+
+	// Append chunk to the streaming message
+	const msg = messages.value[streamingMessageIndex.value]
+	if (msg) {
+		msg.text += data.chunk
+	}
+}
+
+const handleStreamEnd = (data) => {
+	if (data.request_id !== currentRequestId.value) return
+
+	// Finalize the message
+	if (streamingMessageIndex.value !== null) {
+		const msg = messages.value[streamingMessageIndex.value]
+		if (msg) {
+			msg.isStreaming = false
+			// Use complete response from server if available
+			if (data.complete_response) {
+				msg.text = data.complete_response
+			}
+		}
+	}
+
+	// Reset streaming state
+	isStreaming.value = false
+	isLoading.value = false
+	currentRequestId.value = null
+	streamingMessageIndex.value = null
+}
+
+const handleStreamError = (data) => {
+	if (data.request_id !== currentRequestId.value) return
+
+	console.error('AI Tutor streaming error:', data.error_type, data.message)
+
+	// Update or add error message
+	if (streamingMessageIndex.value !== null) {
+		const msg = messages.value[streamingMessageIndex.value]
+		if (msg) {
+			msg.text = 'I encountered an error. Please try again.'
+			msg.isStreaming = false
+		}
+	} else {
+		messages.value.push({
+			text: 'I encountered an error. Please try again.',
+			isUser: false,
+			isStreaming: false,
+		})
+	}
+
+	// Reset streaming state
+	isStreaming.value = false
+	isLoading.value = false
+	currentRequestId.value = null
+	streamingMessageIndex.value = null
+}
 
 const sendMessage = async () => {
 	const message = inputMessage.value.trim()
@@ -135,22 +241,33 @@ const sendMessage = async () => {
 	isLoading.value = true
 
 	try {
-		const response = await call('lms.lms.ai_tutor.ask_tutor', {
+		const response = await call('lms.langchain.tutor_chat.api.ask_tutor', {
 			message: message,
 			current_lesson: props.lessonName,
 			course_name: props.courseName,
 		})
-		
-		const tutorResponse = response?.response || 'I encountered an error. Please try again.'
-		messages.value.push({ text: tutorResponse, isUser: false })
+
+		console.log('response.mode: ', response.mode);
+		if (response?.mode === 'streaming') {
+			// Streaming mode - wait for Socket.IO events
+			currentRequestId.value = response.request_id
+			// The stream_start event will add the streaming message
+		} else {
+			// Sync mode - use response directly
+			const tutorResponse = response?.response || 'I encountered an error. Please try again.'
+			messages.value.push({ text: tutorResponse, isUser: false })
+			isLoading.value = false
+		}
 	} catch (error) {
 		console.error('AI Tutor error:', error)
 		messages.value.push({
 			text: 'I encountered an error. Please try again.',
 			isUser: false,
 		})
-	} finally {
 		isLoading.value = false
+		isStreaming.value = false
+		currentRequestId.value = null
+		streamingMessageIndex.value = null
 	}
 }
 </script>

@@ -261,6 +261,52 @@ bench --site academy.local list-backups
 bench --site academy.local restore [backup-file]
 ```
 
+## Pre-commit Hook: Auto-update CLAUDE.md
+
+This repository includes a pre-commit hook that uses Claude Code CLI to automatically keep `CLAUDE.md` in sync with code changes. When you commit architectural or structural changes, Claude analyzes the diff and updates the documentation if needed.
+
+### Prerequisites
+
+1. **Install Claude Code CLI:**
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+
+2. **Authenticate (one-time):**
+   ```bash
+   claude
+   ```
+
+### Installation
+
+Configure git to use the hooks from `.claude/hooks/`:
+
+```bash
+git config core.hooksPath .claude/hooks
+```
+
+### How It Works
+
+1. You stage and commit files as usual
+2. The pre-commit hook runs before the commit is created
+3. Claude Code analyzes your staged changes
+4. If architectural changes are detected, `CLAUDE.md` is updated and auto-staged
+5. Your commit includes both your changes and the updated documentation
+
+### Skipping the Hook
+
+If you need to commit without running the hook:
+
+```bash
+git commit --no-verify -m "your message"
+```
+
+### Cost Considerations
+
+- Each commit triggers a Claude API call
+- The hook is limited to 5 turns and can only use Read/Edit tools
+- For frequent small commits, consider using `--no-verify` to skip
+
 ### Description
 This Frappe application contains the backend implementation of the AI Tutor Chat.
 It defines the endpoints that are called by the AI Tutor Chat Vue component integrated into the LMS app.

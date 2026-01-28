@@ -113,6 +113,22 @@ doc_events = {
 		"validate": "lms.lms.user.validate_username_duplicates",
 		"after_insert": "lms.lms.user.after_insert",
 	},
+	"LMS Course Progress": {
+		"on_update": "lms.langchain.lms_events.handlers.handle_course_progress_update",
+	},
+	"LMS Quiz Submission": {
+		"after_insert": "lms.langchain.lms_events.handlers.handle_quiz_submission",
+	},
+	"LMS Assignment Submission": {
+		"after_insert": "lms.langchain.lms_events.handlers.handle_assignment_submission",
+		"on_update": "lms.langchain.lms_events.handlers.handle_assignment_status_update",
+	},
+	"LMS Enrollment": {
+		"after_insert": "lms.langchain.lms_events.handlers.handle_enrollment",
+	},
+	"LMS Certificate": {
+		"after_insert": "lms.langchain.lms_events.handlers.handle_certificate_issued",
+	},
 }
 
 # Scheduled Tasks
@@ -120,6 +136,7 @@ doc_events = {
 scheduler_events = {
 	"all": [
 		"lms.sqlite.build_index_in_background",
+		"lms.langchain.lms_events.subscriber.ensure_subscriber_running",
 	],
 	"hourly": [
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.schedule_evals",
@@ -247,6 +264,11 @@ profile_url_prefix = "/users/"
 signup_form_template = "lms.plugins.show_custom_signup"
 
 on_login = "lms.lms.user.on_login"
+
+# Start the LangChain event response subscriber in web worker (long-lived process)
+before_request = [
+	"lms.langchain.lms_events.subscriber.start_event_response_subscriber",
+]
 
 get_site_info = "lms.activation.get_site_info"
 
