@@ -6,7 +6,7 @@ like user profiles.
 
 Configuration (site_config.json):
 	{
-		"shared_data_service_url": "http://shared-data-service:8000",
+		"shared_data_service_url": "http://shared-data-service:8001",
 		"shared_data_api_key": "your-api-key"
 	}
 
