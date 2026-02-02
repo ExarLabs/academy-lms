@@ -25,3 +25,30 @@ def get_ai_tutor_url():
 	"""Get AI Tutor API URL from site config, with localhost default for development."""
 	base_url = frappe.conf.get("ai_tutor_api_url", "http://localhost:7999")
 	return f"{base_url}/api/v1/ai/tutor/chat"
+
+
+def get_shared_data_service_url():
+	"""Get Shared Data Service URL from site config.
+
+	Used for communicating with the shared data service (MongoDB-backed)
+	for cross-service data like user profiles.
+
+	Site config keys:
+		shared_data_service_url: Base URL (default: http://localhost:8002)
+
+	Returns:
+		Base URL for the shared data service.
+	"""
+	return frappe.conf.get("shared_data_service_url", "http://localhost:8002")
+
+
+def get_shared_data_api_key():
+	"""Get Shared Data Service API key from site config.
+
+	Site config keys:
+		shared_data_api_key: API key for X-API-Key authentication
+
+	Returns:
+		API key string, or empty string if not configured.
+	"""
+	return frappe.conf.get("shared_data_api_key", "")
