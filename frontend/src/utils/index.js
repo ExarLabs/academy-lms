@@ -504,6 +504,13 @@ const getSidebarItems = () => {
 					activeFor: ['Statistics'],
 				},
 				{
+					label: 'Learner Analytics',
+					icon: 'BarChart3',
+					to: 'LearnerAnalytics',
+					activeFor: ['LearnerAnalytics'],
+					condition: () => isAdmin(),
+				},
+				{
 					label: 'Contact Us',
 					icon: settings.data?.contact_us_url ? 'Headset' : 'Mail',
 					to: settings.data?.contact_us_url

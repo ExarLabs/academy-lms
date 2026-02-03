@@ -67,6 +67,17 @@ const routes = [
 		component: () => import('@/pages/Statistics.vue'),
 	},
 	{
+		path: '/learner-analytics',
+		name: 'LearnerAnalytics',
+		component: () => import('@/pages/LearnerAnalytics.vue'),
+	},
+	{
+		path: '/learner-analytics/:userId',
+		name: 'LearnerAnalyticsDetails',
+		component: () => import('@/pages/LearnerAnalyticsDetails.vue'),
+		props: true,
+	},
+	{
 		path: '/user/:username',
 		name: 'Profile',
 		component: () => import('@/pages/Profile.vue'),
