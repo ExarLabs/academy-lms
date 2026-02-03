@@ -224,12 +224,12 @@ const overview = createResource({
 
 const learners = createResource({
 	url: 'lms.shared_data_service.api.get_profile_learners_stats',
-	params: computed(() => ({
+	makeParams: () => ({
 		skip: skip.value,
 		limit: limit.value,
 		search: searchQuery.value,
 		sort_by: currentSort.value,
-	})),
+	}),
 	auto: true,
 })
 

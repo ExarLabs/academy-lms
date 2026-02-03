@@ -273,15 +273,15 @@ const learnerId = computed(() => route.params.userId || '')
 
 const detail = createResource({
 	url: 'lms.shared_data_service.api.get_profile_learner_detail',
-	params: computed(() => ({
+	makeParams: () => ({
 		user_id: learnerId.value,
-	})),
+	}),
 	auto: true,
 })
 
 const stats = computed(() => detail.data?.learning_stats || {})
 
-const learnerName = computed(() => detail.data?.full_name || __('Unknown Learner'))
+const learnerName = computed(() => detail.data?.full_name || detail.data?.email || __('Unknown Learner'))
 const learnerEmail = computed(() => detail.data?.email || __('No email'))
 const learnerLastActivity = computed(() => detail.data?.last_activity || null)
 
