@@ -13,6 +13,7 @@ def handle_course_progress_update(doc, method):
 		lesson=doc.lesson,
 		chapter=doc.chapter,
 		status=doc.status,
+		member_name=doc.member_name,
 	)
 
 
@@ -28,6 +29,7 @@ def handle_quiz_submission(doc, method):
 		score_out_of=doc.score_out_of,
 		percentage=doc.percentage,
 		passing_percentage=doc.passing_percentage,
+		member_name=doc.member_name,
 	)
 
 
@@ -43,6 +45,7 @@ def handle_assignment_submission(doc, method):
 		answer=doc.answer,
 		question=doc.question,
 		submission_type=doc.type,
+		member_name=doc.member_name,
 	)
 
 
@@ -63,6 +66,7 @@ def handle_assignment_status_update(doc, method):
 		assignment_title=doc.assignment_title,
 		status=doc.status,
 		comments=doc.comments,
+		member_name=doc.member_name,
 	)
 
 
@@ -86,4 +90,5 @@ def handle_certificate_issued(doc, method):
 		course_title=doc.course_title,
 		issue_date=str(doc.issue_date) if doc.issue_date else None,
 		batch_name=doc.batch_name,
+		member_name=doc.member_name,
 	)
