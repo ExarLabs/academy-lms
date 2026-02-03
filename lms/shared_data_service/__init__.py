@@ -11,7 +11,7 @@ Configuration (site_config.json):
 	}
 
 Example usage:
-	from lms.shared_data import get_user_profile, create_user_profile
+	from lms.shared_data_service import get_user_profile, create_user_profile
 
 	# Get a user profile
 	profile = get_user_profile("user@example.com")
@@ -27,7 +27,7 @@ Example usage:
 	)
 """
 
-from lms.shared_data.client import (
+from lms.shared_data_service.client import (
 	create_user_profile,
 	delete_user_profile,
 	get_user_profile,
