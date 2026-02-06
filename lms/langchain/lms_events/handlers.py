@@ -50,6 +50,7 @@ def handle_course_progress_update(doc, method):
 		chapter=doc.chapter,
 		status=doc.status,
 		member_name=doc.member_name,
+		timestamp=doc.modified,
 	)
 
 
@@ -66,6 +67,7 @@ def handle_quiz_submission(doc, method):
 		percentage=doc.percentage,
 		passing_percentage=doc.passing_percentage,
 		member_name=doc.member_name,
+		timestamp=doc.modified,
 	)
 
 
@@ -84,6 +86,7 @@ def handle_assignment_submission(doc, method):
 		question=doc.question,
 		submission_type=doc.type,
 		member_name=doc.member_name,
+		timestamp=doc.modified,
 	)
 
 
@@ -109,6 +112,7 @@ def handle_assignment_status_update(doc, method):
 		status=doc.status,
 		comments=doc.comments,
 		member_name=doc.member_name,
+		timestamp=doc.modified,
 	)
 
 
@@ -120,6 +124,7 @@ def handle_enrollment(doc, method):
 		course=doc.course,
 		member_name=doc.member_name,
 		member_type=doc.member_type,
+		timestamp=doc.modified,
 	)
 
 
@@ -133,4 +138,5 @@ def handle_certificate_issued(doc, method):
 		issue_date=str(doc.issue_date) if doc.issue_date else None,
 		batch_name=doc.batch_name,
 		member_name=doc.member_name,
+		timestamp=doc.modified,
 	)
