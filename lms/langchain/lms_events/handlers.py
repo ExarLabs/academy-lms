@@ -104,6 +104,8 @@ def handle_assignment_status_update(doc, method):
 		lesson=doc.lesson,
 		assignment=doc.assignment,
 		assignment_title=doc.assignment_title,
+		answer=doc.answer,
+		grade=doc.grade,
 		status=doc.status,
 		comments=doc.comments,
 		member_name=doc.member_name,
