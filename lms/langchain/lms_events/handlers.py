@@ -92,7 +92,7 @@ def handle_assignment_status_update(doc, method):
 
 	Only triggers if the status field has changed.
 	"""
-	if not doc.has_value_changed("status"):
+	if not (doc.has_value_changed("status") or doc.has_value_changed("grade") or doc.has_value_changed("answer")):
 		return
 
 	# course is a fetch_from field that may not be populated
