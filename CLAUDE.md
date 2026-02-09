@@ -69,6 +69,7 @@ Key directories:
 - `lms/lms/doctype/` - Frappe doctypes (data models with controllers)
 - `lms/lms/api.py` - Main API endpoints
 - `lms/langchain/` - LangChain integration module (AI Tutor, event broker)
+- `lms/shared_data_service/` - Shared data service integration (profiles, statistics)
 - `lms/hooks.py` - App configuration, routes, scheduled tasks, doc_events
 - `lms/patches/` - Database migration scripts
 
@@ -80,8 +81,10 @@ Key directories:
 
 Key directories:
 - `frontend/src/pages/` - Page components (route targets)
+  - `LearnerAnalytics.vue` - Admin dashboard for learner statistics
 - `frontend/src/components/` - Reusable components
 - `frontend/src/router.js` - Route definitions
+- `frontend/src/utils/index.js` - Sidebar menu configuration
 
 ### LangChain Integration Module (`lms/langchain/`)
 A modular integration with external LangChain service for AI features:
@@ -144,11 +147,37 @@ lms/langchain/
 
 **Config:** Set `langchain_service_url` in site config (default: http://localhost:7999)
 
+### Shared Data Service Integration (`lms/shared_data_service/`)
+
+HTTP client for communicating with `academy-shared-data-service` (MongoDB-backed):
+
+```
+lms/shared_data_service/
+├── client.py    # HTTP client with retry logic for profiles and statistics API
+└── api.py       # Frappe whitelisted endpoints for admin dashboard
+```
+
+**Client functions:**
+- `get_user_profile(frappe_user_id)` - Get profile by user ID
+- `create_user_profile(...)` - Create new profile
+- `update_user_profile(...)` - Partial update (metadata merged)
+- `get_stats_overview()` - Aggregated statistics
+- `get_learners_stats(skip, limit, search, sort_by)` - Paginated learner list
+- `get_learner_detail(user_id)` - Single learner detail
+
+**API endpoints (require admin/instructor role):**
+- `lms.shared_data_service.api.get_profile_stats_overview`
+- `lms.shared_data_service.api.get_profile_learners_stats`
+- `lms.shared_data_service.api.get_profile_learner_detail`
+
+**Config:** Set `shared_data_service_url` and `shared_data_api_key` in site config.
+
 ### URL Routing
 Frontend routes are under `/lms/*` and handled by Vue Router. Key patterns:
 - `/lms/courses/:courseName` - Course detail
 - `/lms/courses/:courseName/learn/:chapterNumber-:lessonNumber` - Lesson view
 - `/lms/batches/:batchName` - Batch detail
+- `/lms/learner-analytics` - Admin dashboard for learner statistics
 
 Backend routes and redirects are configured in `hooks.py` (website_route_rules, website_redirects).
 
