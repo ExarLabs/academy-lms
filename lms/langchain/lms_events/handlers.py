@@ -4,6 +4,7 @@ import frappe
 
 from lms.langchain.lms_events.broker import broker
 from lms.langchain.lms_events.events import EventType
+from lms.lms.utils import get_course_progress
 
 
 def _get_course_for_assignment(
@@ -42,6 +43,7 @@ def _get_course_for_assignment(
 
 def handle_course_progress_update(doc, method):
 	"""Handler for LMS Course Progress on_update event."""
+	progress = get_course_progress(doc.course, doc.member) if doc.course else None
 	broker.send(
 		event_type=EventType.COURSE_PROGRESS.value,
 		user_id=doc.member,
@@ -49,6 +51,7 @@ def handle_course_progress_update(doc, method):
 		lesson=doc.lesson,
 		chapter=doc.chapter,
 		status=doc.status,
+		progress=progress,
 		member_name=doc.member_name,
 		timestamp=doc.modified,
 	)
@@ -56,6 +59,7 @@ def handle_course_progress_update(doc, method):
 
 def handle_quiz_submission(doc, method):
 	"""Handler for LMS Quiz Submission after_insert event."""
+	progress = get_course_progress(doc.course, doc.member) if doc.course else None
 	broker.send(
 		event_type=EventType.QUIZ_SUBMISSION.value,
 		user_id=doc.member,
@@ -66,6 +70,7 @@ def handle_quiz_submission(doc, method):
 		score_out_of=doc.score_out_of,
 		percentage=doc.percentage,
 		passing_percentage=doc.passing_percentage,
+		progress=progress,
 		member_name=doc.member_name,
 		timestamp=doc.modified,
 	)
@@ -75,6 +80,7 @@ def handle_assignment_submission(doc, method):
 	"""Handler for LMS Assignment Submission after_insert event."""
 	# course is a fetch_from field that may not be populated on after_insert
 	course = _get_course_for_assignment(doc.course, doc.lesson, doc.assignment)
+	progress = get_course_progress(course, doc.member) if course else None
 	broker.send(
 		event_type=EventType.ASSIGNMENT_SUBMISSION.value,
 		user_id=doc.member,
@@ -85,6 +91,7 @@ def handle_assignment_submission(doc, method):
 		answer=doc.answer,
 		question=doc.question,
 		submission_type=doc.type,
+		progress=progress,
 		member_name=doc.member_name,
 		timestamp=doc.modified,
 	)
@@ -100,6 +107,7 @@ def handle_assignment_status_update(doc, method):
 
 	# course is a fetch_from field that may not be populated
 	course = _get_course_for_assignment(doc.course, doc.lesson, doc.assignment)
+	progress = get_course_progress(course, doc.member) if course else None
 	broker.send(
 		event_type=EventType.ASSIGNMENT_STATUS_UPDATE.value,
 		user_id=doc.member,
@@ -111,6 +119,7 @@ def handle_assignment_status_update(doc, method):
 		grade=doc.grade,
 		status=doc.status,
 		comments=doc.comments,
+		progress=progress,
 		member_name=doc.member_name,
 		timestamp=doc.modified,
 	)
