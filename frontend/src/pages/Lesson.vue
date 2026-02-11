@@ -440,7 +440,7 @@ onMounted(() => {
 		}
 	})
 	socket.on('langchain_response_received', (data) => {
-		toast.success(`We received an AI feedback!\n\n${data.content}`, {
+		toast.success(data.content, {
 			duration: 10000,
 		})
 	})
