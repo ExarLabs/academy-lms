@@ -325,25 +325,6 @@
 			</div>
 		</div>
 	</div>
-	<transition name="lesson-recommendation-toast">
-		<div
-			v-if="recommendedLessonToast.visible"
-			class="fixed bottom-6 right-6 z-50 w-[min(30rem,calc(100vw-2rem))] rounded-lg border border-outline-gray-2 bg-surface-white p-4 shadow-2xl"
-		>
-			<p class="text-sm text-ink-gray-8">
-				{{ recommendedLessonToast.content }}
-			</p>
-			<div class="mt-3 flex justify-end">
-				<Button @click="navigateToRecommendedLesson">
-					{{
-						__('Go to {0} lesson').format(
-							recommendedLessonToast.lessonTitle
-						)
-					}}
-				</Button>
-			</div>
-		</div>
-	</transition>
 	<InlineLessonMenu
 		v-if="lesson.data?.name"
 		v-model="showInlineMenu"
@@ -425,15 +406,7 @@ const sidebarStore = useSidebar()
 const plyrSources = ref([])
 const showInlineMenu = ref(false)
 const currentTab = ref('Notes')
-const recommendedLessonToast = ref({
-	visible: false,
-	content: '',
-	lessonTitle: '',
-	chapterNumber: '',
-	lessonNumber: '',
-})
 let timerInterval
-let recommendationToastTimeout
 
 const tabs = ref([
 	{
@@ -457,45 +430,23 @@ const props = defineProps({
 	},
 })
 
-const hideRecommendedLessonToast = () => {
-	if (recommendationToastTimeout) {
-		clearTimeout(recommendationToastTimeout)
-		recommendationToastTimeout = null
-	}
-
-	recommendedLessonToast.value = {
-		visible: false,
-		content: '',
-		lessonTitle: '',
-		chapterNumber: '',
-		lessonNumber: '',
-	}
-}
-
-const showRecommendedLessonToast = (content, recommendedLesson) => {
-	hideRecommendedLessonToast()
-	recommendedLessonToast.value = {
-		visible: true,
-		content: content || '',
-		lessonTitle: recommendedLesson.lesson_title,
-		chapterNumber: String(recommendedLesson.chapter_idx),
-		lessonNumber: String(recommendedLesson.lesson_idx),
-	}
-	recommendationToastTimeout = setTimeout(() => {
-		hideRecommendedLessonToast()
-	}, 10000)
-}
-
-const navigateToRecommendedLesson = () => {
-	router.push({
-		name: 'Lesson',
-		params: {
-			courseName: props.courseName,
-			chapterNumber: recommendedLessonToast.value.chapterNumber,
-			lessonNumber: recommendedLessonToast.value.lessonNumber,
+const displayRecommendedLessonToaster = (content, recommendedLesson) => {
+	toast.success(content, {
+		duration: 10000,
+		action: {
+			label: __('Go to {0}').format(recommendedLesson.lesson_title),
+			onClick: () => {
+				router.push({
+					name: 'Lesson',
+					params: {
+						courseName: props.courseName,
+						chapterNumber: String(recommendedLesson.chapter_idx),
+						lessonNumber: String(recommendedLesson.lesson_idx),
+					},
+				})
+			},
 		},
 	})
-	hideRecommendedLessonToast()
 }
 
 onMounted(() => {
@@ -514,11 +465,10 @@ onMounted(() => {
 			recommendedLesson?.chapter_idx &&
 			recommendedLesson?.lesson_idx
 		) {
-			showRecommendedLessonToast(data.content, recommendedLesson)
+			displayRecommendedLessonToaster(data.content, recommendedLesson)
 			return
 		}
 
-		hideRecommendedLessonToast()
 		toast.success(data.content, {
 			duration: 10000,
 		})
@@ -541,7 +491,6 @@ onBeforeUnmount(() => {
 	document.removeEventListener('fullscreenchange', attachFullscreenEvent)
 	sidebarStore.isSidebarCollapsed = false
 	trackVideoWatchDuration()
-	hideRecommendedLessonToast()
 	socket.off('langchain_response_received')
 })
 
@@ -1183,17 +1132,6 @@ usePageMeta(() => {
 
 .plyr__control:hover {
 	background: none;
-}
-
-.lesson-recommendation-toast-enter-active,
-.lesson-recommendation-toast-leave-active {
-	transition: all 0.2s ease;
-}
-
-.lesson-recommendation-toast-enter-from,
-.lesson-recommendation-toast-leave-to {
-	opacity: 0;
-	transform: translateY(8px);
 }
 
 .plyr--video {
