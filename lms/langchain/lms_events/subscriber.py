@@ -169,6 +169,7 @@ class EventResponseSubscriber:
 				"event_type": event_type,
 				"course": data.get("course"),
 				"lesson": data.get("lesson"),
+				"recommended_lesson": data.get("recommended_lesson"),
 			},
 			user=user_id,
 			after_commit=False,
