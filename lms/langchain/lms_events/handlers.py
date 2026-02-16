@@ -4,7 +4,7 @@ import frappe
 
 from lms.langchain.lms_events.broker import broker
 from lms.langchain.lms_events.events import EventType
-from lms.lms.utils import get_course_progress
+from lms.lms.utils import get_chapters, get_course_progress, get_lesson_details
 
 
 def _get_course_for_assignment(
@@ -41,19 +41,79 @@ def _get_course_for_assignment(
 	return None
 
 
+def _build_course_outline(course: str | None, member: str | None) -> dict:
+	"""Build course outline with lesson completion flags for recommendation."""
+	if not course:
+		return {}
+
+	course_details = frappe.db.get_value(
+		"LMS Course",
+		course,
+		["title", "short_introduction"],
+		as_dict=True,
+	) or {}
+
+	completed_lessons = set()
+	if member:
+		completed_lessons = set(
+			frappe.db.get_all(
+				"LMS Course Progress",
+				{
+					"course": course,
+					"member": member,
+					"status": "Complete",
+				},
+				pluck="lesson",
+			)
+		)
+
+	chapters = []
+	for chapter in get_chapters(course):
+		lessons = []
+		for lesson in get_lesson_details(chapter):
+			lesson_id = lesson.get("name")
+			lessons.append(
+				{
+					"id": lesson_id,
+					"title": lesson.get("title"),
+					"completed": lesson_id in completed_lessons,
+				}
+			)
+
+		chapters.append(
+			{
+				"title": chapter.get("title"),
+				"lessons": lessons,
+			}
+		)
+
+	return {
+		"course_title": course_details.get("title"),
+		"course_description": course_details.get("short_introduction"),
+		"chapters": chapters,
+	}
+
+
 def handle_course_progress_update(doc, method):
 	"""Handler for LMS Course Progress on_update event."""
 	progress = get_course_progress(doc.course, doc.member) if doc.course else None
+	event_data = {
+		"user_id": doc.member,
+		"course": doc.course,
+		"lesson": doc.lesson,
+		"chapter": doc.chapter,
+		"status": doc.status,
+		"progress": progress,
+		"member_name": doc.member_name,
+		"timestamp": doc.modified,
+	}
+
+	if doc.status == "Complete" and doc.course:
+		event_data["course_outline"] = _build_course_outline(doc.course, doc.member)
+
 	broker.send(
 		event_type=EventType.COURSE_PROGRESS.value,
-		user_id=doc.member,
-		course=doc.course,
-		lesson=doc.lesson,
-		chapter=doc.chapter,
-		status=doc.status,
-		progress=progress,
-		member_name=doc.member_name,
-		timestamp=doc.modified,
+		**event_data,
 	)
 
 
