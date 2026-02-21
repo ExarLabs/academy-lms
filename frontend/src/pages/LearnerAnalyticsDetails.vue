@@ -21,7 +21,9 @@
 
 	<div class="p-5 space-y-6">
 		<section class="rounded-xl border bg-surface-white p-5 shadow-sm">
-			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div
+				class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+			>
 				<div>
 					<div class="text-xs uppercase tracking-wide text-ink-gray-5">
 						{{ __('Learner') }}
@@ -34,6 +36,29 @@
 					</div>
 					<div class="mt-2 text-xs text-ink-gray-5">
 						{{ __('User ID') }}: <span class="font-mono">{{ learnerId }}</span>
+					</div>
+					<div v-if="learnerPreferences" class="mt-3 flex flex-wrap gap-2">
+						<span
+							class="rounded-full bg-surface-gray-1 px-2 py-1 text-xs text-ink-gray-7"
+						>
+							{{ __('Pace') }}: {{ learnerPreferences.pace }}
+						</span>
+						<span
+							class="rounded-full bg-surface-gray-1 px-2 py-1 text-xs text-ink-gray-7"
+						>
+							{{ __('Narrative') }}:
+							{{ learnerPreferences.narrative ? __('On') : __('Off') }}
+						</span>
+						<span
+							class="rounded-full bg-surface-gray-1 px-2 py-1 text-xs text-ink-gray-7"
+						>
+							{{ __('Tone') }}: {{ learnerPreferences.tone }}
+						</span>
+						<span
+							class="rounded-full bg-surface-gray-1 px-2 py-1 text-xs text-ink-gray-7"
+						>
+							{{ __('Language') }}: {{ learnerPreferences.language }}
+						</span>
 					</div>
 				</div>
 				<div class="flex flex-col gap-1 text-sm text-ink-gray-6">
@@ -61,13 +86,17 @@
 				</div>
 			</div>
 			<div class="rounded-lg border bg-white p-4">
-				<div class="text-sm text-ink-gray-5">{{ __('Total Quizzes Taken') }}</div>
+				<div class="text-sm text-ink-gray-5">
+					{{ __('Total Quizzes Taken') }}
+				</div>
 				<div class="text-2xl font-semibold text-ink-gray-9">
 					{{ stats.total_quiz_count || 0 }}
 				</div>
 			</div>
 			<div class="rounded-lg border bg-white p-4">
-				<div class="text-sm text-ink-gray-5">{{ __('Certificates Issued') }}</div>
+				<div class="text-sm text-ink-gray-5">
+					{{ __('Certificates Issued') }}
+				</div>
 				<div class="text-2xl font-semibold text-ink-gray-9">
 					{{ stats.total_certificates || 0 }}
 				</div>
@@ -79,7 +108,9 @@
 				<div class="text-base font-semibold text-ink-gray-9">
 					{{ __('Courses Enrolled') }}
 				</div>
-				<span class="text-xs text-ink-gray-5">{{ courses.length }} {{ __('total') }}</span>
+				<span class="text-xs text-ink-gray-5"
+					>{{ courses.length }} {{ __('total') }}</span
+				>
 			</div>
 			<div v-if="courses.length" class="flex flex-wrap gap-2">
 				<span
@@ -100,22 +131,32 @@
 				<div class="text-base font-semibold text-ink-gray-9">
 					{{ __('Course Progress') }}
 				</div>
-				<span class="text-xs text-ink-gray-5">{{ courseProgressRows.length }} {{ __('courses') }}</span>
+				<span class="text-xs text-ink-gray-5"
+					>{{ courseProgressRows.length }} {{ __('courses') }}</span
+				>
 			</div>
 			<div class="overflow-hidden rounded-lg border">
 				<table class="w-full">
 					<thead class="bg-surface-gray-2">
 						<tr>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Course') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Progress') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Last Lesson') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Last Updated') }}
 							</th>
 						</tr>
@@ -126,8 +167,12 @@
 							:key="row.course"
 							class="border-t"
 						>
-							<td class="px-4 py-3 text-sm text-ink-gray-8">{{ row.course }}</td>
-							<td class="px-4 py-3 text-sm text-ink-gray-8">{{ row.progress }}%</td>
+							<td class="px-4 py-3 text-sm text-ink-gray-8">
+								{{ row.course }}
+							</td>
+							<td class="px-4 py-3 text-sm text-ink-gray-8">
+								{{ row.progress }}%
+							</td>
 							<td class="px-4 py-3 text-sm text-ink-gray-6">
 								{{ row.last_lesson || '-' }}
 							</td>
@@ -136,7 +181,10 @@
 							</td>
 						</tr>
 						<tr v-if="!courseProgressRows.length">
-							<td colspan="4" class="px-4 py-6 text-center text-sm text-ink-gray-5">
+							<td
+								colspan="4"
+								class="px-4 py-6 text-center text-sm text-ink-gray-5"
+							>
 								{{ __('No course progress data yet') }}
 							</td>
 						</tr>
@@ -150,22 +198,32 @@
 				<div class="text-base font-semibold text-ink-gray-9">
 					{{ __('Certificates') }}
 				</div>
-				<span class="text-xs text-ink-gray-5">{{ certificates.length }} {{ __('issued') }}</span>
+				<span class="text-xs text-ink-gray-5"
+					>{{ certificates.length }} {{ __('issued') }}</span
+				>
 			</div>
 			<div class="overflow-hidden rounded-lg border">
 				<table class="w-full">
 					<thead class="bg-surface-gray-2">
 						<tr>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Course') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Issue Date') }}
 							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="cert in certificates" :key="cert.course_title" class="border-t">
+						<tr
+							v-for="cert in certificates"
+							:key="cert.course_title"
+							class="border-t"
+						>
 							<td class="px-4 py-3 text-sm text-ink-gray-8">
 								{{ cert.course_title || '-' }}
 							</td>
@@ -174,7 +232,10 @@
 							</td>
 						</tr>
 						<tr v-if="!certificates.length">
-							<td colspan="2" class="px-4 py-6 text-center text-sm text-ink-gray-5">
+							<td
+								colspan="2"
+								class="px-4 py-6 text-center text-sm text-ink-gray-5"
+							>
 								{{ __('No certificates issued yet') }}
 							</td>
 						</tr>
@@ -188,28 +249,42 @@
 				<div class="text-base font-semibold text-ink-gray-9">
 					{{ __('Assignments') }}
 				</div>
-				<span class="text-xs text-ink-gray-5">{{ assignments.length }} {{ __('records') }}</span>
+				<span class="text-xs text-ink-gray-5"
+					>{{ assignments.length }} {{ __('records') }}</span
+				>
 			</div>
 			<div class="overflow-hidden rounded-lg border">
 				<table class="w-full">
 					<thead class="bg-surface-gray-2">
 						<tr>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Title') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Status') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Course') }}
 							</th>
-							<th class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5">
+							<th
+								class="px-4 py-3 text-left text-sm font-medium text-ink-gray-5"
+							>
 								{{ __('Timestamp') }}
 							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="assignment in assignments" :key="assignmentKey(assignment)" class="border-t">
+						<tr
+							v-for="assignment in assignments"
+							:key="assignmentKey(assignment)"
+							class="border-t"
+						>
 							<td class="px-4 py-3 text-sm text-ink-gray-8">
 								{{ assignment.title || '-' }}
 							</td>
@@ -229,7 +304,10 @@
 							</td>
 						</tr>
 						<tr v-if="!assignments.length">
-							<td colspan="4" class="px-4 py-6 text-center text-sm text-ink-gray-5">
+							<td
+								colspan="4"
+								class="px-4 py-6 text-center text-sm text-ink-gray-5"
+							>
 								{{ __('No assignments recorded yet') }}
 							</td>
 						</tr>
@@ -239,10 +317,15 @@
 		</section>
 
 		<section v-if="detail.loading" class="rounded-lg border bg-white p-5">
-			<div class="text-sm text-ink-gray-5">{{ __('Loading learner data...') }}</div>
+			<div class="text-sm text-ink-gray-5">
+				{{ __('Loading learner data...') }}
+			</div>
 		</section>
 
-		<section v-if="!detail.loading && detail.error" class="rounded-lg border bg-white p-5">
+		<section
+			v-if="!detail.loading && detail.error"
+			class="rounded-lg border bg-white p-5"
+		>
 			<div class="text-sm text-ink-gray-5">
 				{{ __('Unable to load learner details.') }}
 			</div>
@@ -264,7 +347,11 @@ const route = useRoute()
 const router = useRouter()
 
 onMounted(() => {
-	if (!user.data?.is_moderator && !user.data?.is_instructor && !user.data?.is_evaluator) {
+	if (
+		!user.data?.is_moderator &&
+		!user.data?.is_instructor &&
+		!user.data?.is_evaluator
+	) {
 		router.push({ name: 'Courses' })
 	}
 })
@@ -281,9 +368,15 @@ const detail = createResource({
 
 const stats = computed(() => detail.data?.learning_stats || {})
 
-const learnerName = computed(() => detail.data?.full_name || detail.data?.email || __('Unknown Learner'))
+const learnerName = computed(
+	() => detail.data?.full_name || detail.data?.email || __('Unknown Learner'),
+)
 const learnerEmail = computed(() => detail.data?.email || __('No email'))
 const learnerLastActivity = computed(() => detail.data?.last_activity || null)
+
+const learnerPreferences = computed(
+	() => detail.data?.metadata?.preferences || null,
+)
 
 const courses = computed(() => stats.value.courses_enrolled || [])
 
@@ -319,7 +412,10 @@ const breadcrumbs = computed(() => {
 		},
 		{
 			label: learnerName.value,
-			route: { name: 'LearnerAnalyticsDetails', params: { userId: learnerId.value } },
+			route: {
+				name: 'LearnerAnalyticsDetails',
+				params: { userId: learnerId.value },
+			},
 		},
 	]
 })

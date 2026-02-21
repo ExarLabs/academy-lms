@@ -430,6 +430,25 @@ const props = defineProps({
 	},
 })
 
+const displayRecommendedLessonToaster = (content, recommendedLesson) => {
+	toast.success(content, {
+		duration: 10000,
+		action: {
+			label: __('Go to {0}').format(recommendedLesson.lesson_title),
+			onClick: () => {
+				router.push({
+					name: 'Lesson',
+					params: {
+						courseName: props.courseName,
+						chapterNumber: String(recommendedLesson.chapter_idx),
+						lessonNumber: String(recommendedLesson.lesson_idx),
+					},
+				})
+			},
+		},
+	})
+}
+
 onMounted(() => {
 	startTimer()
 	sidebarStore.isSidebarCollapsed = true
@@ -440,7 +459,17 @@ onMounted(() => {
 		}
 	})
 	socket.on('langchain_response_received', (data) => {
-		toast.success(`We received an AI feedback!\n\n${data.content}`, {
+		const recommendedLesson = data?.recommended_lesson
+		if (
+			recommendedLesson?.lesson_title &&
+			recommendedLesson?.chapter_idx &&
+			recommendedLesson?.lesson_idx
+		) {
+			displayRecommendedLessonToaster(data.content, recommendedLesson)
+			return
+		}
+
+		toast.success(data.content, {
 			duration: 10000,
 		})
 	})
